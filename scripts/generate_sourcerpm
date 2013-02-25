@@ -55,9 +55,9 @@ def update_repo(working_dir, repo_path, repo_uri):
         command = ('git', 'clone', repo_uri)
         call(working_dir, command)
 
-def verify_redhat_tag(repo_uri, package_name, package_version, distro):
+def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, distro):
 
-    tags = call(repo_path, ('git', 'ls-remote', '--tags', repo_uri, 'redhat/*'), pipe=subprocess.PIPE)
+    tags = call(working_dir, ('git', 'ls-remote', '--tags', repo_uri, 'redhat/*'), pipe=subprocess.PIPE)
 
     expected_tag = 'redhat/%s_%s_%s'%(package_name, package_version, distro)
     tag_list = tags.split('\n')
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     report_failure = False
     for d in rd.get_target_distros():
 
-        tag = verify_redhat_tag(args.repo_uri, args.package_name, package_version, d)
+        tag = verify_redhat_tag(args.repo_uri, args.working_dir, args.package_name, package_version, d)
         if not tag:
             print("No tag; bailing")
             report_failure = True
