@@ -9,7 +9,7 @@ import tempfile
 import time 
 import shutil
 
-from buildfarm import rosdistro
+from buildfarm import rosdistro, mock_config
 from rosrpm.core import fedora_release_version
 
 def parse_options():
@@ -73,6 +73,7 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
     return None
 
 def build_source_rpm(working_dir, repo_uri, tag, packagename, distro, output):
+    mock_config.check_mock_config(distro, 'i386')
     call(working_dir, ('/usr/bin/mock', '--quiet', '--root=fedora-' + fedora_release_version(distro) + '-i386-rpmfusion_nonfree', '--buildsrpm', '--resultdir=' + output, '--scm-enable', '--scm-option', 'git_get=git clone ' + repo_uri + ' ' + packagename, '--scm-option', 'package=' + packagename, '--scm-option', 'branch=' + tag))
     print("Successfully created source RPM in %s"%output)
     call(working_dir, ['ls', output])
