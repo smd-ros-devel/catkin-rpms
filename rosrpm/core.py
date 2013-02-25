@@ -37,6 +37,7 @@ import sys
 
 fedora_map = {
     '18': 'spherical',
+    '17': 'beefy',
     }
 
 fedora_inv_map = dict([[v,k] for k,v in fedora_map.items()])
