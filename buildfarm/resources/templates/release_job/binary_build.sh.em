@@ -31,9 +31,9 @@ mkdir -p $WORKSPACE/workspace
 cd $WORKSPACE/workspace
 
 # Check and update mock root
-MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO -a $ARCH`
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO-$ARCH-ros --init
-MOCK_ROOT=`/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO-$ARCH-ros --print-root-path`
+MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a $ARCH`
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --init
+MOCK_ROOT=`/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --print-root-path`
 
 # Pull the sourcerpm
 yumdownloader --source --installroot $MOCK_ROOT $PACKAGE

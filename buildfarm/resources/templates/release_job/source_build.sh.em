@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 #stop on error
 set -o errexit

@@ -16,7 +16,7 @@ from rospkg.distro import load_distro, distro_uri
 
 from rosdistro import redhatify_package_name, Rosdistro
 
-from rosrpm import fedora_release_version
+from rosrpm.core import fedora_release_version
 
 from . import repo, jenkins_support
 
