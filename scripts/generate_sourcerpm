@@ -63,7 +63,7 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
     tag_list = []
     for tag in tags.split('\n'):
         if tag != '':
-            tag_list += [tag.split()[-1]]
+            tag_list += [tag.split()[-1].replace('refs/tags/','')]
 
     if expected_tag in tag_list:
         return expected_tag
