@@ -4,6 +4,10 @@ import os
 import sys
 import getopt
 
+repos = {
+'building': 'http://csc.mcs.sdsmt.edu/smd-ros-building'
+}
+
 def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
     # General Stuff
     user_mock_dir = os.path.join(os.path.expanduser('~'), '.mock_config')
@@ -22,16 +26,20 @@ def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
     arch_config += """
 config_opts['root'] += '-ros'
 """
-
-    arch_config += """
+    for repo in repos:
+        arch_config += """
 config_opts['yum.conf'] += \"\"\"
-[ros-shadow]
-name=ros-shadow
-baseurl=http://csc.mcs.sdsmt.edu/smd-ros-shadow/fedora/linux/%(distro)s/%(arch)s/
+[ros-building]
+name=ros-building
+baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/
 
-[ros-shadow-debug]
-name=ros-shadow-debug
-baseurl=http://csc.mcs.sdsmt.edu/smd-ros-shadow/fedora/linux/%(distro)s/%(arch)s/debug/
+[ros-building-debug]
+name=ros-building-debug
+baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/debug/
+
+[ros-building-source]
+name=ros-building-source
+baseurl=%(repo)s/fedora/linux/%(distro)s/SRPMS/
 \"\"\"
 """%locals()
 
@@ -76,7 +84,7 @@ if __name__ == "__main__":
 
     if not distro:
         print >> sys.stderr, 'ERROR: No valid distro specified'
-	print('Usage: mock_config.py -d <fedora_version> -a <arch>')
+        print('Usage: mock_config.py -d <fedora_version> -a <arch>')
         sys.exit(1)
 
     print(check_mock_config(distro, arch, quiet=True))
