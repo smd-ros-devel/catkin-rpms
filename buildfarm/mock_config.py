@@ -50,3 +50,5 @@ config_opts['plugin_conf']['tmpfs_opts']['max_fs_size'] = '20G'
 
     # Done
     print('Mock configuration is OK in %s'%user_mock_dir)
+
+    return user_mock_dir
