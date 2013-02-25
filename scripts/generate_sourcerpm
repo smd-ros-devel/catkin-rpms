@@ -34,8 +34,8 @@ def make_working(working_dir):
         os.makedirs(working_dir)
 
 def call(working_dir, command, pipe=None):
-    print('+ ls -alh %s' % working_dir)
-    process = Popen('ls -alh /', stdout=pipe, stderr=pipe, cwd='/')
+    print('+ whoami')
+    process = Popen('whoami', stdout=pipe, stderr=pipe)
     output, unused_err = process.communicate()
     print('+ RETURNED:\n' + output)
 
