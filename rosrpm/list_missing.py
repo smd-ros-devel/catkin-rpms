@@ -49,7 +49,7 @@ import tempfile
 import time
 import rospkg.distro
 
-from core import debianize_name, debianize_version
+from core import redhatify_name, redhatify_version
 from repo import deb_in_repo, load_Packages, get_repo_version, get_stack_version, BadRepo
 
 NAME = 'list_missing.py' 
@@ -160,7 +160,7 @@ def compute_missing_depends(stack_name, distro, os_platform, arch, repo=SHADOW_R
     #don't include self
     deps = set([(sn, sv) for (sn, sv) in deps if not sn == stack_name])
     for sn, sv in deps:
-        deb_name = "ros-%s-%s"%(distro.release_name, debianize_name(sn))
+        deb_name = "ros-%s-%s"%(distro.release_name, redhatify_name(sn))
         # see if there's a dry version
         deb_version = '[0-9.-]*-[st][0-9]+~[a-z]+' 
         if not deb_in_repo(repo, deb_name, deb_version, os_platform, arch, use_regex=True):
@@ -191,9 +191,9 @@ def get_missing(distro, os_platform, arch, repo=SHADOW_REPO, lock_version=True):
         if not sv:
             missing_primary.add(sn)
             continue
-        deb_name = "ros-%s-%s"%(distro_name, debianize_name(sn))
+        deb_name = "ros-%s-%s"%(distro_name, redhatify_name(sn))
         if lock_version:
-            deb_version = debianize_version(sv, '\w*', os_platform)
+            deb_version = redhatify_version(sv, '\w*', os_platform)
         else:
             deb_version = '[0-9.]*-[st][0-9]+~[a-z]+'
         if not deb_in_repo(repo, deb_name, deb_version, os_platform, arch, use_regex=True):
@@ -253,11 +253,11 @@ def load_distro(distro_name):
     "Load the distro from the URL"
     return rospkg.distro.load_distro(rospkg.distro.distro_uri(distro_name))
 
-SOURCEDEB_DIR_URI = 'https://code.ros.org/svn/release/download/stacks/%(stack_name)s/%(stack_name)s-%(stack_version)s/'
-SOURCEDEB_URI = SOURCEDEB_DIR_URI+'%(deb_name)s_%(stack_version)s-0~%(os_platform)s.dsc'
+SOURCERPM_DIR_URI = 'https://code.ros.org/svn/release/download/stacks/%(stack_name)s/%(stack_name)s-%(stack_version)s/'
+SOURCERPM_URI = SOURCERPM_DIR_URI+'%(deb_name)s_%(stack_version)s-0~%(os_platform)s.dsc'
     
 MISSING_REPO = '*'
-MISSING_SOURCEDEB = '!'
+MISSING_SOURCERPM = '!'
 MISSING_PRIMARY = '-'
 MISSING_DEP = '&lt;-'
 MISSING_BROKEN = '--'
@@ -267,7 +267,7 @@ MISSING_EXCLUDED_DEP = '&lt;X'
 COLORS = {
     MISSING_REPO: 'black',
     MISSING_PRIMARY: 'blue',
-    MISSING_SOURCEDEB: 'yellow',
+    MISSING_SOURCERPM: 'yellow',
     MISSING_DEP: 'lightblue',
     MISSING_BROKEN: 'red',
     MISSING_BROKEN_DEP: 'pink',
@@ -275,25 +275,25 @@ COLORS = {
     MISSING_EXCLUDED_DEP: 'lightgrey',
     }
 
-def sourcedeb_url(distro, stack_name, os_platform):
+def sourcerpm_url(distro, stack_name, os_platform):
     # have to setup locals for substitution
     distro_name = distro.release_name
     stack_version = distro.stacks[stack_name].version
-    deb_name = "ros-%s-%s"%(distro_name, debianize_name(stack_name))
-    return SOURCEDEB_URI%locals()
+    deb_name = "ros-%s-%s"%(distro_name, redhatify_name(stack_name))
+    return SOURCERPM_URI%locals()
 
 def get_html_legend():
     return """<h2>Stack Debbuild Status</h2>
 <h3>Legend</h3>
 <ul>
-<li>Missing (sourcedeb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
+<li>Missing (sourcerpm): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Missing (deb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Depends Missing: <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Broken (deb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Depends Broken (deb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Excluded: <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Depends Excluded: <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li> 
-</ul>"""%(COLORS[MISSING_SOURCEDEB], MISSING_SOURCEDEB, 
+</ul>"""%(COLORS[MISSING_SOURCERPM], MISSING_SOURCERPM, 
           COLORS[MISSING_PRIMARY], MISSING_PRIMARY, 
           COLORS[MISSING_DEP], MISSING_DEP,
           COLORS[MISSING_BROKEN], MISSING_BROKEN, 
@@ -306,7 +306,7 @@ def get_html_header(distro_name):
     return """<html>
 <head>
 <title>
-%(distro_name)s: debbuild report
+%(distro_name)s: rpmbuild report
 </title>
 </head>
 <script type="text/javascript" src="sortable.js"></script>
@@ -331,7 +331,7 @@ td {
 }
 </style>
 <body>
-<h1><span class="title">%(distro_name)s: debbuild report</span></h1>"""%locals()
+<h1><span class="title">%(distro_name)s: rpmbuild report</span></h1>"""%locals()
     
 def get_html_table_header(h, distro_name, os_platforms, arches, counts, job):
     b = cStringIO.StringIO()
@@ -387,9 +387,9 @@ def get_html_repository_status(distro, os_platforms, arches):
     b.write("</table>")
     return b.getvalue()
 
-def sourcedeb_job_url(h, distro_name, stack, stack_version):
+def sourcerpm_job_url(h, distro_name, stack, stack_version):
     params = {'STACK_NAME': stack, 'DISTRO_NAME': distro_name,'STACK_VERSION': stack_version}
-    return h.build_job_url('debbuild-sourcedeb', parameters=params)                            
+    return h.build_job_url('rpmbuild-sourcerpm', parameters=params)                            
     
 
 def generate_allhtml_report(output, distro_name, os_platforms):
@@ -446,25 +446,25 @@ def generate_allhtml_report(output, distro_name, os_platforms):
             missing_primary, missing_dep, missing_excluded, missing_excluded_dep = args
             missing_primary_fixed, missing_dep_fixed, missing_excluded_fixed, missing_excluded_dep_fixed = args_fixed
             for s in missing_primary:
-                if svn_url_exists(sourcedeb_url(distro, s, os_platform)):
+                if svn_url_exists(sourcerpm_url(distro, s, os_platform)):
                     stacks[s][key] = MISSING_PRIMARY
                 else:
-                    stacks[s][key] = MISSING_SOURCEDEB
+                    stacks[s][key] = MISSING_SOURCERPM
             for s in missing_dep:
-                if svn_url_exists(sourcedeb_url(distro, s, os_platform)):
+                if svn_url_exists(sourcerpm_url(distro, s, os_platform)):
                     stacks[s][key] = MISSING_DEP
                 else:
-                    stacks[s][key] = MISSING_SOURCEDEB
+                    stacks[s][key] = MISSING_SOURCERPM
             for s in missing_primary_fixed:
-                if svn_url_exists(sourcedeb_url(distro, s, os_platform)):
+                if svn_url_exists(sourcerpm_url(distro, s, os_platform)):
                     stacks[s][key] = MISSING_BROKEN
                 else:
-                    stacks[s][key] = MISSING_SOURCEDEB
+                    stacks[s][key] = MISSING_SOURCERPM
             for s in missing_dep_fixed:
-                if svn_url_exists(sourcedeb_url(distro, s, os_platform)):
+                if svn_url_exists(sourcerpm_url(distro, s, os_platform)):
                     stacks[s][key] = MISSING_BROKEN_DEP
                 else:
-                    stacks[s][key] = MISSING_SOURCEDEB
+                    stacks[s][key] = MISSING_SOURCERPM
 
             for s in missing_excluded:
                 stacks[s][key] = MISSING_EXCLUDED
@@ -475,7 +475,7 @@ def generate_allhtml_report(output, distro_name, os_platforms):
         f.write(get_html_header(distro_name))
         f.write(get_html_repository_status(distro, os_platforms, arches))
         f.write(get_html_legend())
-        job = 'debbuild-build-debs'
+        job = 'rpmbuild-build-debs'
         f.write(get_html_table_header(h, distro_name, os_platforms, arches, counts, job))
         
         stack_names = sorted(stacks.keys())
@@ -487,19 +487,19 @@ def generate_allhtml_report(output, distro_name, os_platforms):
             # generate URL
             stack_name = stack
             stack_version = shadow_version
-            url = SOURCEDEB_DIR_URI%locals()
+            url = SOURCERPM_DIR_URI%locals()
             
-            # MISSING_SOURCEDEB is os/arch independent, so treat row as a whole            
+            # MISSING_SOURCERPM is os/arch independent, so treat row as a whole            
             sample_key = "%s-%s"%(os_platforms[0], arches[0])
-            if sample_key in d and d[sample_key] == MISSING_SOURCEDEB:
+            if sample_key in d and d[sample_key] == MISSING_SOURCERPM:
                 color = COLORS[d[sample_key]]
-                job_url = sourcedeb_job_url(h, distro_name, stack, shadow_version)
+                job_url = sourcerpm_job_url(h, distro_name, stack, shadow_version)
                 f.write('<tr><td bgcolor="%s"><a href="%s">%s %s</a> <a href="%s">[+]</a></td>'%(color, url, stack, shadow_version, job_url))
             else:
                 if 0:
                     f.write('<tr><td><a href="%s">%s %s</a></td>'%(url, stack, shadow_version))
                 else:
-                    job_url = sourcedeb_job_url(h, distro_name, stack, shadow_version)
+                    job_url = sourcerpm_job_url(h, distro_name, stack, shadow_version)
                     # temporarily including [+] for all right now to help bringup maverick
                     f.write('<tr><td><a href="%s">%s %s</a> <a href="%s">[+]</a></td>'%(url, stack, shadow_version, job_url)) 
                 
@@ -523,7 +523,7 @@ def generate_allhtml_report(output, distro_name, os_platforms):
                         val = d[key]
                         color = COLORS[val]
                         params = {'STACK_NAME': stack}
-                        if val == MISSING_SOURCEDEB:
+                        if val == MISSING_SOURCERPM:
                             f.write('<td bgcolor="%s">%s %s</td>'%(color, val, version_str))
                         else:
                             url = h.build_job_url('%s-%s-%s-%s'%(job, distro_name, os_platform, arch),
