@@ -73,7 +73,7 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
     return None
 
 def build_source_rpm(working_dir, repo_uri, tag, packagename, distro, output):
-    call(working_dir, ('/usr/bin/mock', '--quiet', '--root=fedora-' + fedora_release_version(distro) + '-i386', '--buildsrpm', '--resultdir=' + output, '--scm-enable', '--scm-option', 'git_get=git clone ' + repo_uri + ' ' + packagename, '--scm-option', 'package=' + packagename, '--scm-option', 'branch=' + tag))
+    call(working_dir, ('/usr/bin/mock', '--quiet', '--root=fedora-' + fedora_release_version(distro) + '-i386-rpmfusion_nonfree', '--buildsrpm', '--resultdir=' + output, '--scm-enable', '--scm-option', 'git_get=git clone ' + repo_uri + ' ' + packagename, '--scm-option', 'package=' + packagename, '--scm-option', 'branch=' + tag))
     print("Successfully created source RPM in %s"%output)
     call(working_dir, ['ls', output])
 
