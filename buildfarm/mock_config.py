@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 import os
+import sys
+import getopt
 
-def check_mock_config(distro, arch='i386', use_ramdisk=False):
+def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
     # General Stuff
     user_mock_dir = os.path.join(os.path.expanduser('~'), '.mock_config')
     mock_dir = os.path.normpath('/etc/mock')
@@ -18,6 +18,10 @@ def check_mock_config(distro, arch='i386', use_ramdisk=False):
     # Arch-specific config
     with open(os.path.join(mock_dir, 'fedora-%s-%s-rpmfusion_nonfree.cfg' % (distro, arch)), 'r') as f:
         arch_config = f.read()
+
+    arch_config += """
+config_opts['root'] += '-ros'
+"""
 
     arch_config += """
 config_opts['yum.conf'] += \"\"\"
@@ -44,11 +48,35 @@ config_opts['plugin_conf']['tmpfs_opts']['max_fs_size'] = '20G'
             user_arch_config = f.read()
 
     if user_arch_config != arch_config:
-        print('Updating ' + 'fedora-%s-%s-ros.cfg'%(distro, arch))
+        if not quiet:
+            print('Updating ' + 'fedora-%s-%s-ros.cfg'%(distro, arch))
         with open(os.path.join(user_mock_dir, 'fedora-%s-%s-ros.cfg'%(distro, arch)), 'w') as f:
             f.write(arch_config)
 
     # Done
-    print('Mock configuration is OK in %s'%user_mock_dir)
+    if not quiet:
+        print('Mock configuration is OK in %s'%user_mock_dir)
 
     return user_mock_dir
+
+if __name__ == "__main__":
+    distro = None
+    arch = 'i386'
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],'d:a:',['ifile=','ofile='])
+    except getopt.GetoptError:
+        print('Usage: mock_config.py -d <fedora_version> -a <arch>')
+        sys.exit(1)
+
+    for opt, arg in opts:
+        if opt in ('-d', '--distro'):
+            distro = arg
+        elif opt in ('-a', '--arch'):
+            arch = arg
+
+    if not distro:
+        print >> sys.stderr, 'ERROR: No valid distro specified'
+	print('Usage: mock_config.py -d <fedora_version> -a <arch>')
+        sys.exit(1)
+
+    print(check_mock_config(distro, arch))

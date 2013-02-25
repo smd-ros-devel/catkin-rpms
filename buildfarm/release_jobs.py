@@ -16,6 +16,8 @@ from rospkg.distro import load_distro, distro_uri
 
 from rosdistro import redhatify_package_name, Rosdistro
 
+from rosrpm import fedora_release_version
+
 from . import repo, jenkins_support
 
 import jenkins
@@ -255,6 +257,7 @@ def dry_binaryrpm_jobs(stackname, dry_maintainers, rosdistro, distros, arches, f
         for arch in arches:
             d['ARCH'] = arch
             d['DISTRO'] = distro
+            d['DISTRO_VER'] = fedora_release_version(distro)
 
             d["CHILD_PROJECTS"] = calc_child_jobs(package, distro, arch, jobgraph)
             d["DEPENDENTS"] = "True"
@@ -280,6 +283,7 @@ def binaryrpm_jobs(package, maintainer_emails, distros, arches, fqdn, jobgraph):
         for arch in arches:
             d['ARCH'] = arch
             d['DISTRO'] = distro
+            d['DISTRO_VER'] = fedora_release_version(distro)
             d["CHILD_PROJECTS"] = calc_child_jobs(package, distro, arch, jobgraph)
             d["DEPENDENTS"] = add_dependent_to_dict(package, jobgraph)
             config = create_binaryrpm_config(d)

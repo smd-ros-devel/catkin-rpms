@@ -1,11 +1,15 @@
-#!/bin/bash
+#!/bin/bash -x
+
+#stop on error
+set -o errexit
+
 RELEASE_URI=@(RELEASE_URI)
 FQDN=@(FQDN)
 PACKAGE=@(PACKAGE)
 ROSDISTRO=@(ROSDISTRO)
 SHORT_PACKAGE_NAME=@(SHORT_PACKAGE_NAME)
 
-sudo yum install -q -y mock
+sudo yum install -q -y mock mock-rpmfusion-nonfree
 
 if [ -e $WORKSPACE/catkin-rpms ]
 then
@@ -14,12 +18,8 @@ fi
 
 git clone git://github.com/smd-ros-devel/catkin-rpms.git $WORKSPACE/catkin-rpms -b master --depth 1
 
-
-
 cd $WORKSPACE/catkin-rpms 
 . setup.sh
-
-
 
 rm -rf $WORKSPACE/output
 rm -rf $WORKSPACE/workspace
