@@ -60,7 +60,7 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
     tags = call(working_dir, ('git', 'ls-remote', '--tags', repo_uri, 'redhat/*'), pipe=subprocess.PIPE)
 
     expected_tag = 'redhat/%s_%s_%s'%(package_name, package_version, distro)
-    tag_list = tags.split('\n')
+    tag_list = []
     for tag in tags.split('\n'):
         tag_list += [tags.split()[1]]
 
