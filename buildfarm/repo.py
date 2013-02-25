@@ -33,7 +33,7 @@
 # Revision $Id: repo.py 16975 2012-09-03 05:02:44Z tfoote $
 
 """
-Utilities for reading state from a debian repo
+Utilities for reading state from an RPM repo
 """
 
 import urllib
@@ -44,7 +44,7 @@ import tempfile
 import shutil
 import gzip
 
-#from .core import debianize_name
+#from .core import redhatify_name
 
 class BadRepo(Exception): pass
 
@@ -63,10 +63,10 @@ def get_Packages(repo_url, os_platform, arch, cache=None):
     # repo has a subdirectory ubuntu.  I can't parameterize it out
     # without potentially breaking a lot. Using an if statement to get
     # it to work.
-    if 'packages.ros.org/ros' in repo_url or 'shadow' in repo_url:
-        packages_url = repo_url + '/ubuntu/dists/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
+    if 'csc.mcs.sdsmt.edu/smd-ros' in repo_url or 'shadow' in repo_url:
+        packages_url = repo_url + '/fedora/linux/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
     else:
-        packages_url = repo_url + '/dists/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
+        packages_url = repo_url + '/linux/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
     if packages_url in cache:
         return cache[packages_url]
     else:
@@ -90,10 +90,10 @@ def get_source_Packages(repo_url, os_platform, cache=None):
     # repo has a subdirectory ubuntu.  I can't parameterize it out
     # without potentially breaking a lot. Using an if statement to get
     # it to work.
-    if 'packages.ros.org/ros' in repo_url or 'shadow' in repo_url:
-        packages_url = repo_url + '/ubuntu/dists/%(os_platform)s/main/source/Sources.gz'%locals()
+    if 'csc.mcs.sdsmt.edu/smd-ros' in repo_url or 'shadow' in repo_url:
+        packages_url = repo_url + '/fedora/linux/%(os_platform)s/main/source/Sources.gz'%locals()
     else:
-        packages_url = repo_url + '/dists/%(os_platform)s/main/source/Sources.gz'%locals()
+        packages_url = repo_url + '/linux/%(os_platform)s/main/source/Sources.gz'%locals()
     if packages_url in cache:
         return cache[packages_url]
     else:
@@ -112,7 +112,7 @@ def get_source_Packages(repo_url, os_platform, cache=None):
 
 def parse_Packages(packagelist):
     """
-    Parse debian Packages list into (package, version, depends) tuples
+    Parse RPM Packages list into (package, version, depends) tuples
     @return: parsed tuples or None if packagelist is None
     """
     package_deps = []
@@ -134,7 +134,7 @@ def parse_Packages(packagelist):
     
 def load_Packages(repo_url, os_platform, arch, cache=None, source=False):
     """
-    Download and parse debian Packages list into (package, version, depends) tuples
+    Download and parse RPM Packages list into (package, version, depends) tuples
     """
     if source:
         return parse_Packages(get_source_Packages(repo_url, os_platform, cache))
@@ -142,7 +142,7 @@ def load_Packages(repo_url, os_platform, arch, cache=None, source=False):
 
 def get_repo_version(repo_url, distro, os_platform, arch, source=False):
     """
-    Return the greatest build-stamp for any deb in the repository
+    Return the greatest build-stamp for any RPM in the repository
     """
     packagelist = load_Packages(repo_url, os_platform, arch, source)
     return max(['0'] + [x[1][x[1].find('-')+1:x[1].find('~')] for x in packagelist if x[3] == distro.release_name])
@@ -153,27 +153,27 @@ def count_packages(repo_url, rosdistro, os_platform, arch, cache=None):
     M = re.findall('^Package: ros-%s-.*$' % (rosdistro), packagelist, re.MULTILINE)
     return len(M)
 
-def deb_in_repo(repo_url, deb_name, deb_version, os_platform, arch, use_regex=True, cache=None, source=False):
+def rpm_in_repo(repo_url, rpm_name, rpm_version, os_platform, arch, use_regex=True, cache=None, source=False):
     """
     @param cache: dictionary to store Packages list for caching
     """
     if source:
         packagelist = get_source_Packages(repo_url, os_platform, cache)
-        search_string = '^Package: %s\nFormat: .*\nBinary: .*\nArchitecture: .*\nVersion: %s'%(deb_name, deb_version)
+        search_string = '^Package: %s\nFormat: .*\nBinary: .*\nArchitecture: .*\nVersion: %s'%(rpm_name, rpm_version)
         M = re.search(search_string, packagelist, re.MULTILINE)
         return M is not None
     else:
         packagelist = get_Packages(repo_url, os_platform, arch, cache)
     if not use_regex:
-        s = 'Package: %s\nVersion: %s'%(deb_name, deb_version)
+        s = 'Package: %s\nVersion: %s'%(rpm_name, rpm_version)
         return s in packagelist
     else:
-        M = re.search('^Package: %s\nVersion: %s$'%(deb_name, deb_version), packagelist, re.MULTILINE)
+        M = re.search('^Package: %s\nVersion: %s$'%(rpm_name, rpm_version), packagelist, re.MULTILINE)
         return M is not None
 
-def get_depends(repo_url, deb_name, os_platform, arch):
+def get_depends(repo_url, rpm_name, os_platform, arch):
     """
-    Get all debian package dependencies by scraping the Packages
+    Get all RPM package dependencies by scraping the Packages
     list. We mainly use this for invalidation logic. 
     """
     # There is probably something much simpler we could do, but this
@@ -181,7 +181,7 @@ def get_depends(repo_url, deb_name, os_platform, arch):
     # repo.
     package_deps = load_Packages(repo_url, os_platform, arch)
     done = False
-    queue = [deb_name]
+    queue = [rpm_name]
     depends = set()
     # This is not particularly efficient, but it does not need to
     # be. Basically, we find all the packages that depend on the
@@ -202,8 +202,8 @@ def get_depends(repo_url, deb_name, os_platform, arch):
 #    """
 #    Get the ROS version number of the stack in the repository
 #    """
-#    deb_name = "ros-%s-%s"%(distro_name, debianize_name(stack_name))
-#    match = [vm for sm, vm, _, _ in packageslist if sm == deb_name]
+#    rpm_name = "ros-%s-%s"%(distro_name, redhatify_name(stack_name))
+#    match = [vm for sm, vm, _, _ in packageslist if sm == rpm_name]
 #    if match:
 #        return match[0].split('-')[0]
 #    else:

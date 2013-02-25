@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# TODO:
+# This code originally had Tully Foote as the author, but until I figure out
+# where the automated E-mails addresses are kept, I'm changing the author
+# to myself
+
 from setuptools import setup
 
 # Prevent "TypeError: 'NoneType' object is not callable" error
@@ -21,14 +26,14 @@ setup(
         'scripts/count_ros_packages.py',
         'scripts/create_release_jobs.py',
         'scripts/create_static_jobs.py',
-        'scripts/generate_sourcedeb',
+        'scripts/generate_sourcerpm',
         'scripts/generate_status_page.py',
         'scripts/setup_apt_root.py',
         'scripts/trigger_missing.py'],
     package_data={'buildfarm': ['resources/templates/*.em', 'resources/templates/*/*']},
     install_requires=['argparse', 'catkin_pkg', 'EmPy', 'rospkg', 'vcstools'],
-    author='Tully Foote',
-    author_email='tfoote@willowgarage.com',
+    author='Scott K Logan',
+    author_email='logans@cottasy.net',
     url='http://www.ros.org/wiki/',
     download_url='http://pr.willowgarage.com/downloads/buildfarm/',
     keywords=['ROS'],

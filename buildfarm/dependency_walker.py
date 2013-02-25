@@ -1,6 +1,6 @@
 #!/bin/env python
 
-from rosdistro import debianize_package_name
+from rosdistro import redhatify_package_name
 
 import os.path
 import copy
@@ -148,12 +148,12 @@ def get_jenkins_dependencies(rosdistro, packages):
     result = {}
     for pkg_name in sorted(packages.keys()):
         p = packages[pkg_name]
-        deb_name = debianize_package_name(rosdistro, p.name)
+        rpm_name = redhatify_package_name(rosdistro, p.name)
         build_depends = _get_depends(packages, p, recursive=False, buildtime=True)
         run_depends = _get_depends(packages, p, recursive=False, buildtime=False)
 
         # switching to only set first level dependencies to clean up clutter in jenkins instead of the recursive ones below
-        result[deb_name] = [debianize_package_name(rosdistro, d.name) for d in build_depends | run_depends]
+        result[rpm_name] = [redhatify_package_name(rosdistro, d.name) for d in build_depends | run_depends]
         continue
 
     return result

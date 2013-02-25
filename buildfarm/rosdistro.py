@@ -6,7 +6,7 @@ from __future__ import print_function
 import sys
 import yaml, urllib2
 
-URL_PROTOTYPE="https://raw.github.com/ros/rosdistro/master/releases/%s.yaml"
+URL_PROTOTYPE="https://raw.github.com/smd-ros-devel/rosdistro/master/releases/%s.yaml"
 
 class RepoMetadata(object):
     def __init__(self, name, url, version, packages = {}, status = None):
@@ -25,17 +25,14 @@ def sanitize_package_name(name):
     return name.replace('_', '-')
 
 
-def debianize_package_name(rosdistro, name):
-    if rosdistro == 'backports':
-        return sanitize_package_name(name)
+def redhatify_package_name(rosdistro, name):
     return sanitize_package_name("ros-%s-%s"%(rosdistro, name))
 
 
-def undebianize_package_name(rosdistro, name):
-    if rosdistro != 'backports':
-        prefix = 'ros-%s-' % rosdistro
-        assert(name.startswith(prefix))
-        name = name[len(prefix):]
+def unredhatify_package_name(rosdistro, name):
+    prefix = 'ros-%s-' % rosdistro
+    assert(name.startswith(prefix))
+    name = name[len(prefix):]
     return name.replace('-', '_')
 
 
@@ -74,8 +71,8 @@ class Rosdistro:
             else:
                 print("Missing required 'url' or 'version' for %s" % name)
 
-    def debianize_package_name(self, package_name):
-        return debianize_package_name(self._rosdistro, package_name)
+    def redhatify_package_name(self, package_name):
+        return redhatify_package_name(self._rosdistro, package_name)
 
     def get_repo_list(self):
         return self._repoinfo.iterkeys()
@@ -138,7 +135,7 @@ class Rosdistro:
         raise NotImplemented
             
 
-    def compute_rosinstall_snippet(self, local_name, gbp_url, version, distro_name):
+    def compute_rosinstall_snippet(self, local_name, release_url, version, distro_name):
 
         if version is None:
             print ("Error version unset for %s"%local_name)
@@ -147,9 +144,9 @@ class Rosdistro:
         config['local-name'] = local_name
 
         config['version'] = 'upstream/%s'%version
-        config['version'] = 'debian/ros-%s-%s_%s_%s'%(self._rosdistro, local_name, version, distro_name)
+        config['version'] = 'redhat/ros-%s-%s_%s_%s'%(self._rosdistro, local_name, version, distro_name)
         #config['version'] = '%s-%s'%(local_name, version)
-        config['uri'] = gbp_url
+        config['uri'] = release_url
         return {'git': config}
 
 
@@ -160,10 +157,10 @@ class Rosdistro:
 
 
 def get_target_distros(rosdistro):
-    print("Fetching " + URL_PROTOTYPE%'targets')
-    targets_map = yaml.load(urllib2.urlopen(URL_PROTOTYPE%'targets'))
+    print("Fetching " + URL_PROTOTYPE%'fedora-targets')
+    targets_map = yaml.load(urllib2.urlopen(URL_PROTOTYPE%'fedora-targets'))
     my_targets = [x for x in targets_map if rosdistro in x]
     if len(my_targets) != 1:
-        print("Must have exactly one entry for rosdistro %s in targets.yaml"%(rosdistro))
+        print("Must have exactly one entry for rosdistro %s in fedora-targets.yaml"%(rosdistro))
         sys.exit(1)
     return my_targets[0][rosdistro]

@@ -8,7 +8,7 @@ import shutil
 import tempfile
 import vcstools
 
-from rosdistro import sanitize_package_name, debianize_package_name
+from rosdistro import sanitize_package_name, redhatify_package_name
 
 
 def get_stack_of_remote_repository(name, type_, url, workspace=None, version=None, skip_update=False):
@@ -60,7 +60,7 @@ def get_stacks(workspace, repository_dict, rosdistro, skip_update=False):
         try:
             stack = get_stack_of_remote_repository(name, 'git', url, workspace, version_number, skip_update)
         except Exception as e:
-            # try getting the release branch without the debian number if it has one
+            # try getting the release branch without the Red Hat release number if it has one
             index = version_number.rfind('-')
             if index == -1:
                 print("Could not fetch '%s' from '%s' with version '%s': %s" % (name, url, version_number, e))
@@ -109,7 +109,7 @@ def get_dependencies(rosdistro, stacks):
             runtime_dependencies[name] = []
         else:
             catkin_project_name = stack.name
-            packages[catkin_project_name] = debianize_package_name(rosdistro, catkin_project_name)
+            packages[catkin_project_name] = redhatify_package_name(rosdistro, catkin_project_name)
             build_dependencies[catkin_project_name] = [d.name for d in stack.build_depends]
             runtime_dependencies[catkin_project_name] = [d.name for d in stack.depends]
 

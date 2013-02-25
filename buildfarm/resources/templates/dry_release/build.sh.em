@@ -20,15 +20,15 @@ echo $ARCH
 
 
 
-# Get latest catkin-debs
-if [ -e $WORKSPACE/catkin-debs ]
+# Get latest catkin-rpms
+if [ -e $WORKSPACE/catkin-rpms ]
 then
-  rm -rf $WORKSPACE/catkin-debs
+  rm -rf $WORKSPACE/catkin-rpms
 fi
 
-git clone git://github.com/willowgarage/catkin-debs.git $WORKSPACE/catkin-debs -b master --depth 1
+git clone git://github.com/smd-ros-devel/catkin-rpms.git $WORKSPACE/catkin-rpms -b master --depth 1
 
-cd $WORKSPACE/catkin-debs
+cd $WORKSPACE/catkin-rpms
 . setup.sh
 
 
@@ -38,14 +38,14 @@ cd $WORKSPACE/catkin-debs
 set +o errexit
 @[end if]
 
-single_deb.py $DISTRO_NAME $STACK_NAME $OS_PLATFORM $ARCH --fqdn $ROS_REPO_FQDN
+single_rpm.py $DISTRO_NAME $STACK_NAME $OS_PLATFORM $ARCH --fqdn $ROS_REPO_FQDN
 
 @[if IS_METAPACKAGES]
 
 # exit if anything fails
 set -o errexit
 
-$WORKSPACE/catkin-debs/scripts/count_ros_packages.py $DISTRO_NAME $OS_PLATFORM $ARCH --count $PACKAGES_FOR_SYNC
-ssh rosbuild@@pub8 -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/reprepro_updater/scripts/prepare_sync.py /var/packages/ros-shadow-fixed/ubuntu -r $DISTRO_NAME -d $OS_PLATFORM -a $ARCH -u http://50.28.27.175/repos/building/ -c
+$WORKSPACE/catkin-rpms/scripts/count_ros_packages.py $DISTRO_NAME $OS_PLATFORM $ARCH --count $PACKAGES_FOR_SYNC
+ssh rosbuild@@pub8 -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/reprepro_updater/scripts/prepare_sync.py /var/packages/ros-shadow-fixed/fedora -r $DISTRO_NAME -d $OS_PLATFORM -a $ARCH -u http://csc.mcs.sdsmt.edu/smd-ros-building/ -c
 
 @[end if]

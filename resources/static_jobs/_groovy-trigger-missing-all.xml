@@ -2,7 +2,7 @@
   <actions/>
   <description>Trigger jobs with missing Debian packages for Groovy.&#13;
 &#13;
-Generated from catkin-debs/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
+Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
   <logRotator>
     <daysToKeep>30</daysToKeep>
     <numToKeep>10</numToKeep>
@@ -17,7 +17,7 @@ Generated from catkin-debs/resources/static_jobs. Do not edit on Jenkins but in 
       <hudson.plugins.git.UserRemoteConfig>
         <name></name>
         <refspec></refspec>
-        <url>https://github.com/willowgarage/catkin-debs.git</url>
+        <url>https://github.com/smd-ros-devel/catkin-rpms.git</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
@@ -66,7 +66,7 @@ source ./setup.sh
   </builders>
   <publishers>
     <hudson.tasks.Mailer>
-      <recipients>tfoote@willowgarage.com dthomas@willowgarage.com</recipients>
+      <recipients>logans@cottsay.net</recipients>
       <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>

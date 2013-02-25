@@ -2,7 +2,7 @@
   <actions/>
   <description>Trigger broken jobs with non-broken upstream for Groovy.&#13;
 &#13;
-Generated from catkin-debs/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
+Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
   <logRotator>
     <daysToKeep>30</daysToKeep>
     <numToKeep>10</numToKeep>
@@ -33,8 +33,8 @@ import hudson.model.Result
 println &quot;Triggering builds for the following jobs:&quot;
 
 def prefix = &quot;ros-groovy-&quot;
-pattern_src = Pattern.compile(prefix + &quot;.+_sourcedeb&quot;)
-pattern_bin = Pattern.compile(prefix + &quot;.+_binarydeb_.+&quot;)
+pattern_src = Pattern.compile(prefix + &quot;.+_sourcerpm&quot;)
+pattern_bin = Pattern.compile(prefix + &quot;.+_binaryrpm_.+&quot;)
 for (p in hudson.model.Hudson.instance.projects) {
   if (!pattern_src.matcher(p.name).matches() &amp;&amp; !pattern_bin.matcher(p.name).matches()) continue
   if (p.isDisabled()) continue
@@ -84,7 +84,7 @@ for (p in hudson.model.Hudson.instance.projects) {
   </builders>
   <publishers>
     <hudson.tasks.Mailer>
-      <recipients>tfoote@willowgarage.com dthomas@willowgarage.com</recipients>
+      <recipients>logans@cottsay.net</recipients>
       <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>

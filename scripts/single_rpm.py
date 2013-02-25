@@ -32,7 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-Build debs for a package and all of its dependencies as necessary
+Build RPMs for a package and all of its dependencies as necessary
 """
 
 import paramiko
@@ -48,12 +48,12 @@ import re
 import time
 
 from rospkg.distro import distro_uri, load_distro
-import rosdeb
-from rosdeb import debianize_name, debianize_version, rosdistro, targets, list_missing
-from rosdeb.rosutil import send_email
-from rosdeb.source_deb import download_control
+import rosrpm
+from rosrpm import redhatify_name, redhatify_version, rosdistro, targets, list_missing
+from rosrpm.rosutil import send_email
+from rosrpm.source_rpm import download_control
 
-NAME = 'build_debs.py' 
+NAME = 'build_rpms.py' 
 TARBALL_URL = "https://code.ros.org/svn/release/download/stacks/%(stack_name)s/%(base_name)s/%(f_name)s"
 
 REPO_PATH ='/var/www/repos/building'
@@ -64,7 +64,9 @@ TGZ_VERSION='dry_6'
 import traceback
 
 def repo_url(fqdn):
-   return "http://%s/repos/building"%(fqdn)
+# TODO: Fix this
+#   return "http://%s/repos/building"%(fqdn)
+    return "http://csc.mcs.sdsmt.edu/smd-ros-building"
 
 class StackBuildFailure(Exception):
 

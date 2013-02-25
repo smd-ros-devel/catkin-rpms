@@ -18,15 +18,15 @@ def parse_options():
     parser.add_argument("-u", "--update", dest="update", action='store_true', default=False, 
                         help="update the cache from the server")
     parser.add_argument('--repo', dest='repo_urls', action='append',metavar=['REPO_NAME@REPO_URL'],
-           help='The name for the source and the url such as ros@http://50.28.27.175/repos/building')
+           help='The name for the source and the url such as ros@http://csc.mcs.sdsmt.edu/smd-ros-building')
     parser.add_argument('--destdir', dest='dest_dir', action='store', default = '.',
-           help='What directory to download the debs into. Default: "." ')
+           help='What directory to download the RPMs into. Default: "." ')
 
     args = parser.parse_args()
 
     # default for now to use our devel server
     if not args.repo_urls:
-        args.repo_urls =['ros@http://50.28.27.175/repos/building']
+        args.repo_urls =['ros@http://csc.mcs.sdsmt.edu/smd-ros-building']
     for a in args.repo_urls:
         if not '@' in a:
             parser.error("Invalid repo definition: %s"%a)
@@ -107,8 +107,8 @@ if __name__ == "__main__":
     else:  
         rootdir = tempfile.mkdtemp()
         
-    arches = ['i386', 'amd64']
-    distros = ['lucid', 'natty', 'oneiric']
+    arches = ['i386', 'x86_64']
+    distros = ['spherical']
 
 
     ros_repos = setup_apt_root.parse_repo_args(args.repo_urls)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
         render_vertical(packages)
 
-        result = raw_input('Would you like to pull these debs? [y/N]')
+        result = raw_input('Would you like to pull these RPMs? [y/N]')
         if result == "y" or result == "Y": #TODO change to starting with y
             print "starts with y"
         else:

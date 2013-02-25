@@ -15,9 +15,9 @@ import buildfarm.apt_root
 import buildfarm.rosdistro
 from rospkg.distro import distro_uri
 
-ros_repos = {'ros': 'http://packages.ros.org/ros/ubuntu/',
-             'shadow-fixed': 'http://packages.ros.org/ros-shadow-fixed/ubuntu/',
-             'building': 'http://50.28.27.175/repos/building'}
+ros_repos = {'ros': 'http://csc.mcs.sdsmt.edu/smd-ros/fedora/',
+             'shadow-fixed': 'http://csc.mcs.sdsmt.edu/smd-ros-shadow-fixed/fedora/',
+             'building': 'http://csc.mcs.sdsmt.edu/smd-ros-building'}
 
 version_rx = re.compile(r'[0-9.-]+[0-9]')
 
@@ -25,7 +25,7 @@ def get_repo_da_caches(rootdir, ros_repo_names, da_strs):
     '''
     Returns [(repo_name, da_str, cache_dir), ...]
 
-    For example, get_repo_da_caches('/tmp/ros_apt_caches', ['ros', 'shadow-fixed'], ['quantal_i386'])
+    For example, get_repo_da_caches('/tmp/ros_yum_caches', ['ros', 'shadow-fixed'], ['spherical_i386'])
     '''
     return [(ros_repo_name, da_str, get_repo_cache_dir_name(rootdir, ros_repo_name, da_str))
             for ros_repo_name in ros_repo_names
@@ -42,7 +42,7 @@ def get_ros_repo_names(ros_repos):
 def get_da_strs(distro_arches):
     return [get_dist_arch_str(d, a) for d, a in distro_arches]
 
-bin_arches = ['amd64', 'i386']
+bin_arches = ['x86_64', 'i386']
 
 def get_distro_arches(arches, rosdistro):
     distros = buildfarm.rosdistro.get_target_distros(rosdistro)
@@ -51,7 +51,7 @@ def get_distro_arches(arches, rosdistro):
 def make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs, repo_names, rosdistro):
     '''
     Returns an in-memory table with all the information that will be displayed:
-    ros package names and versions followed by debian versions for each
+    ros package names and versions followed by Red Hat versions for each
     distro/arch.
     '''
     left_columns = [('name', object), ('version', object), ('wet', object)]
@@ -59,7 +59,7 @@ def make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs, repo_name
     columns = left_columns + right_columns
 
     non_ros_pkg_names = set([])
-    ros_pkg_names = set([buildfarm.rosdistro.debianize_package_name(rosdistro, pkg[0]) for pkg in ros_pkgs_table])
+    ros_pkg_names = set([buildfarm.rosdistro.redhatify_package_name(rosdistro, pkg[0]) for pkg in ros_pkgs_table])
     for pkgs in repo_name_da_to_pkgs.values():
         pkg_names = set([pkg.name for pkg in pkgs])
         non_ros_pkg_names |= pkg_names - ros_pkg_names
@@ -75,12 +75,12 @@ def make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs, repo_name
 
     i = len(ros_pkgs_table)
     for pkg_name in non_ros_pkg_names:
-        undebianized_pkg_name = buildfarm.rosdistro.undebianize_package_name(rosdistro, pkg_name)
-        table['name'][i] = undebianized_pkg_name
+        unredhatified_pkg_name = buildfarm.rosdistro.unredhatify_package_name(rosdistro, pkg_name)
+        table['name'][i] = ununredhatified_pkg_name
         table['version'][i] = ''
         table['wet'][i] = 'unknown'
         for da_str in da_strs:
-            table[da_str][i] = add_version_cell(table, undebianized_pkg_name, repo_name_da_to_pkgs, da_str, repo_names, rosdistro)
+            table[da_str][i] = add_version_cell(table, unredhatified_pkg_name, repo_name_da_to_pkgs, da_str, repo_names, rosdistro)
         i += 1
 
     return table
@@ -102,7 +102,7 @@ def strip_version_suffix(version):
     ''
     >>> strip_version_suffix('None')
     'None'
-    >>> strip_version_suffix('1.9.9-0quantal-20121115-0529-+0000')
+    >>> strip_version_suffix('1.9.9-0spherical-20121115-0529-+0000')
     '1.9.9-0'
     >>> strip_version_suffix('1.9.9-foo')
     '1.9.9'
@@ -111,26 +111,26 @@ def strip_version_suffix(version):
     return match.group(0) if match else version
 
 def get_pkg_version(da_str, repo_name_da_to_pkgs, repo_name, name, rosdistro):
-    deb_name = buildfarm.rosdistro.debianize_package_name(rosdistro, name)
+    rpm_name = buildfarm.rosdistro.redhatify_package_name(rosdistro, name)
     if da_str.endswith('source'):
         # Get the source version from the corresponding amd64 package.
-        amd64_da_str = da_str.replace('source', 'amd64')
-        p = get_matching_pkg(repo_name_da_to_pkgs, deb_name, repo_name, amd64_da_str)
+        amd64_da_str = da_str.replace('source', 'x86_64')
+        p = get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, amd64_da_str)
         return getattr(getattr(p, 'candidate', None), 'source_version', None)
     else:
-        p = get_matching_pkg(repo_name_da_to_pkgs, deb_name, repo_name, da_str)
+        p = get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, da_str)
         return getattr(getattr(p, 'candidate', None), 'version', None)
 
-def get_matching_pkg(repo_name_da_to_pkgs, deb_name, repo_name, da_str):
+def get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, da_str):
     pkgs = repo_name_da_to_pkgs.get((repo_name, da_str), [])
-    matching_pkgs = [p for p in pkgs if p.name == deb_name]
+    matching_pkgs = [p for p in pkgs if p.name == rpm_name]
     if not matching_pkgs:
         logging.debug('No package found with name %s on %s repo, %s',
-                      deb_name, repo_name, da_str)
+                      rpm_name, repo_name, da_str)
         return None
     elif len(matching_pkgs) > 1:
         logging.warn('More than one package found with name %s on %s repo, %s',
-                     deb_name, repo_name, da_str)
+                     rpm_name, repo_name, da_str)
         return None
     else:
         return matching_pkgs[0]
@@ -148,9 +148,9 @@ def get_repo_cache_dir_name(rootdir, ros_repo_name, dist_arch):
 
 def build_repo_caches(rootdir, ros_repos, distro_arches):
     '''
-    Builds (or rebuilds) local caches for ROS apt repos.
+    Builds (or rebuilds) local caches for ROS yum repos.
 
-    For example, build_repo_caches('/tmp/ros_apt_caches', ros_repos,
+    For example, build_repo_caches('/tmp/ros_yum_caches', ros_repos,
                                    get_distro_arches())
     '''
     for repo_name, url in ros_repos.items():
@@ -160,7 +160,7 @@ def build_repo_caches(rootdir, ros_repos, distro_arches):
             build_repo_cache(dir, repo_name, url, distro, arch)
 
 def build_repo_cache(dir, ros_repo_name, ros_repo_url, distro, arch):
-    logging.info('Setting up an apt directory at %s', dir)
+    logging.info('Setting up a yum directory at %s', dir)
     repo_dict = {ros_repo_name: ros_repo_url}
     buildfarm.apt_root.setup_apt_rootdir(dir, distro, arch,
                                          additional_repos=repo_dict)
@@ -214,7 +214,7 @@ def render_csv(rootdir, outfile, rosdistro):
     repo_name_da_to_pkgs = dict(((repo_name, da_str), get_pkgs_from_apt_cache(cache, 'ros-%s-' % rosdistro))
                                 for repo_name, da_str, cache in repo_da_caches)
 
-    # Make an in-memory table showing the latest deb version for each package.
+    # Make an in-memory table showing the latest RPM version for each package.
     t = make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs,
                             ros_repos.keys(), rosdistro)
 
@@ -234,7 +234,7 @@ def transform_csv_to_html(data_source, metadata_builder, rosdistro, start_time):
     header = rows[0]
     rows = rows[1:]
 
-    # move source columns before amd64/i386 columns for each distro
+    # move source columns before x86_64/i386 columns for each distro
     column_mapping = {3: 5, 4: 3, 5: 4, 6: 8, 7: 6, 8: 7, 9: 11, 10: 9, 11: 10}
     header = [header[column_mapping[i] if column_mapping and i in column_mapping else i] for i in range(len(header))]
     rows = [[row[column_mapping[i] if column_mapping and i in column_mapping else i] for i in range(len(header))] for row in rows]

@@ -5,18 +5,18 @@ PACKAGE=@(PACKAGE)
 ROSDISTRO=@(ROSDISTRO)
 SHORT_PACKAGE_NAME=@(SHORT_PACKAGE_NAME)
 
-sudo apt-get install -y git-buildpackage dput debhelper
+sudo yum install -y git-buildpackage dput debhelper
 
-if [ -e $WORKSPACE/catkin-debs ]
+if [ -e $WORKSPACE/catkin-rpms ]
 then
-  rm -rf $WORKSPACE/catkin-debs
+  rm -rf $WORKSPACE/catkin-rpms
 fi
 
-git clone git://github.com/willowgarage/catkin-debs.git $WORKSPACE/catkin-debs -b master --depth 1
+git clone git://github.com/smd-ros-devel/catkin-rpms.git $WORKSPACE/catkin-rpms -b master --depth 1
 
 
 
-cd $WORKSPACE/catkin-debs 
+cd $WORKSPACE/catkin-rpms 
 . setup.sh
 
 
@@ -24,4 +24,4 @@ cd $WORKSPACE/catkin-debs
 rm -rf $WORKSPACE/output
 rm -rf $WORKSPACE/workspace
 
-$WORKSPACE/catkin-debs/scripts/generate_sourcedeb $RELEASE_URI $PACKAGE $ROSDISTRO $SHORT_PACKAGE_NAME --working $WORKSPACE/workspace --output $WORKSPACE/output --repo-fqdn $FQDN 
+$WORKSPACE/catkin-rpms/scripts/generate_sourcerpm $RELEASE_URI $PACKAGE $ROSDISTRO $SHORT_PACKAGE_NAME --working $WORKSPACE/workspace --output $WORKSPACE/output --repo-fqdn $FQDN 

@@ -2,7 +2,7 @@
   <actions/>
   <description>Generate status page for Groovy.&#13;
 &#13;
-Generated from catkin-debs/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
+Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
   <logRotator>
     <daysToKeep>30</daysToKeep>
     <numToKeep>50</numToKeep>
@@ -12,7 +12,7 @@ Generated from catkin-debs/resources/static_jobs. Do not edit on Jenkins but in 
   <keepDependencies>false</keepDependencies>
   <properties/>
   <scm class="hudson.scm.NullSCM"/>
-  <assignedNode>debbuild</assignedNode>
+  <assignedNode>rpmbuild</assignedNode>
   <canRoam>false</canRoam>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
@@ -30,18 +30,18 @@ Generated from catkin-debs/resources/static_jobs. Do not edit on Jenkins but in 
 #stop on error
 set -o errexit
 
-rm -rf catkin-debs
-git clone git://github.com/willowgarage/catkin-debs.git -b master
+rm -rf catkin-rpms
+git clone git://github.com/smd-ros-devel/catkin-rpms.git -b master
 
-export PYTHONPATH=$WORKSPACE/catkin-debs
-$WORKSPACE/catkin-debs/scripts/generate_status_page.py groovy --basedir $WORKSPACE/groovy_apt_cache
+export PYTHONPATH=$WORKSPACE/catkin-rpms
+$WORKSPACE/catkin-rpms/scripts/generate_status_page.py groovy --basedir $WORKSPACE/groovy_yum_cache
 
-scp -o StrictHostKeyChecking=no $WORKSPACE/groovy_apt_cache/groovy.* wgs32:/var/www/www.ros.org/html/debbuild/</command>
+scp -o StrictHostKeyChecking=no $WORKSPACE/groovy_apt_cache/groovy.* wgs32:/var/www/www.ros.org/html/rpmbuild/</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
     <hudson.tasks.Mailer>
-      <recipients>tfoote@willowgarage.com dthomas@willowgarage.com</recipients>
+      <recipients>logans@cottsay.net</recipients>
       <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>

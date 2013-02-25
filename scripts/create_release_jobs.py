@@ -10,26 +10,26 @@ from buildfarm import jenkins_support, release_jobs
 
 import rospkg.distro
 
-from buildfarm.rosdistro import Rosdistro, debianize_package_name
+from buildfarm.rosdistro import Rosdistro, redhatify_package_name
 
-URL_PROTOTYPE = 'https://raw.github.com/ros/rosdistro/master/releases/%s.yaml'
+URL_PROTOTYPE = 'https://raw.github.com/smd-ros-devel/rosdistro/master/releases/%s.yaml'
 
 
 def parse_options():
     parser = argparse.ArgumentParser(
              description='Create a set of jenkins jobs '
-             'for source debs and binary debs for a catkin package.')
+             'for source RPMs and binary RPMs for a catkin package.')
     parser.add_argument('--fqdn', dest='fqdn',
-           help='The source repo to push to, fully qualified something...',
-           default='50.28.27.175')
+           help='The source repo to push to, fully qualified domain name',
+           default='csc.mcs.sdsmt.edu')
     parser.add_argument(dest='rosdistro',
            help='The ros distro. fuerte, groovy, hydro, ...')
     parser.add_argument('--distros', nargs='+',
-           help='A list of debian distros. Default: %(default)s',
+           help='A list of Red Hat distros. Default: %(default)s',
            default=[])
     parser.add_argument('--arches', nargs='+',
-           help='A list of debian architectures. Default: %(default)s',
-           default=['i386', 'amd64'])
+           help='A list of Red Hat architectures. Default: %(default)s',
+           default=['i386', 'x86_64'])
     parser.add_argument('--commit', dest='commit',
            help='Really?', action='store_true', default=False)
     parser.add_argument('--delete', dest='delete',
@@ -84,7 +84,7 @@ def doit(rd, distros, arches, fqdn, jobs_graph, rosdistro, packages, dry_maintai
             if not r.version:
                 print('- skipping "%s" since version is null' % p)
                 continue
-            pkg_name = rd.debianize_package_name(p)
+            pkg_name = rd.redhatify_package_name(p)
             results[pkg_name] = release_jobs.doit(r.url,
                  pkg_name,
                  packages[p],
@@ -123,12 +123,12 @@ def doit(rd, distros, arches, fqdn, jobs_graph, rosdistro, packages, dry_maintai
         if not d.stacks[s].version:
             print('- skipping "%s" since version is null' % s)
             continue
-        results[rd.debianize_package_name(s)] = release_jobs.dry_doit(s, dry_maintainers[s], default_distros, target_arches, fqdn, rosdistro, jobgraph=jobs_graph, commit=commit, jenkins_instance=jenkins_instance, packages_for_sync=packages_for_sync)
+        results[rd.redhatify_package_name(s)] = release_jobs.dry_doit(s, dry_maintainers[s], default_distros, target_arches, fqdn, rosdistro, jobgraph=jobs_graph, commit=commit, jenkins_instance=jenkins_instance, packages_for_sync=packages_for_sync)
         #time.sleep(1)
 
     # special metapackages job
     if not whitelist_repos or 'metapackages' in whitelist_repos:
-        results[rd.debianize_package_name('metapackages')] = release_jobs.dry_doit('metapackages', [], default_distros, target_arches, fqdn, rosdistro, jobgraph=jobs_graph, commit=commit, jenkins_instance=jenkins_instance, packages_for_sync=packages_for_sync)
+        results[rd.redhatify_package_name('metapackages')] = release_jobs.dry_doit('metapackages', [], default_distros, target_arches, fqdn, rosdistro, jobgraph=jobs_graph, commit=commit, jenkins_instance=jenkins_instance, packages_for_sync=packages_for_sync)
 
     if delete_extra_jobs:
         assert(not whitelist_repos)
@@ -142,7 +142,7 @@ def doit(rd, distros, arches, fqdn, jobs_graph, rosdistro, packages, dry_maintai
 
         existing_jobs = set([j['name'] for j in jenkins_instance.get_jobs()])
         relevant_jobs = existing_jobs - configured_jobs
-        relevant_jobs = [j for j in relevant_jobs if rosdistro in j and ('_sourcedeb' in j or '_binarydeb' in j)]
+        relevant_jobs = [j for j in relevant_jobs if rosdistro in j and ('_sourcerpm' in j or '_binaryrpm' in j)]
 
         for j in relevant_jobs:
             print('Job "%s" detected as extra' % j)
@@ -186,8 +186,8 @@ if __name__ == '__main__':
     for k, v in dry_jobgraph.iteritems():
         combined_jobgraph[k] = v
 
-    # setup a job triggered by all other debjobs
-    combined_jobgraph[debianize_package_name(args.rosdistro, 'metapackages')] = combined_jobgraph.keys()
+    # setup a job triggered by all other rpmjobs
+    combined_jobgraph[redhatify_package_name(args.rosdistro, 'metapackages')] = combined_jobgraph.keys()
 
     results_map = doit(
         rd,

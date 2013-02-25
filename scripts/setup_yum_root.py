@@ -11,11 +11,11 @@ def parse_options():
     parser.add_argument('--mirror', dest='mirror', action='store', default='http://us.archive.ubuntu.com/ubuntu/',
            help='The url for the default repo, like --mirror to debootstrap')
     parser.add_argument('--repo', dest='repo_urls', action='append',metavar=['REPO_NAME@REPO_URL'],
-           help='The name for the source and the url such as ros@http://50.28.27.175/repos/building')
+           help='The name for the source and the url such as ros@http://csc.mcs.sdsmt.edu/smd-ros-building')
     parser.add_argument(dest='distro',
-           help='The debian release distro, lucid, oneiric, etc')
+           help='The Red Hat release distro, beefy, spherical, etc')
     parser.add_argument(dest='architecture',
-           help='The debian binary architecture. amd64, i386, armel')
+           help='The Red Hat binary architecture. x86_64, i386, arm')
     parser.add_argument(dest='rootdir',
            help='The rootdir to use')
     parser.add_argument('--local-conf-dir',dest='local_conf',
@@ -25,7 +25,7 @@ def parse_options():
 
     if not args.repo_urls:
         #default to devel machine for now
-        args.repo_urls = ['ros@http://50.28.27.175/repos/building']
+        args.repo_urls = ['ros@http://csc.mcs.sdsmt.edu/repos/building']
 
     for a in args.repo_urls:
         if not '@' in a:

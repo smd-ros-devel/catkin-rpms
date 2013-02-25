@@ -77,17 +77,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/catkin-debs.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/catkin-rpms.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/catkin-debs.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/catkin-rpms.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/catkin-debs"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/catkin-debs"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/catkin-rpms"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/catkin-rpms"
 	@echo "# devhelp"
 
 epub:
@@ -153,5 +153,5 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 deploy:	html
-		rsync --perms --chmod=a+rX  -va $(BUILDDIR)/html/ lou.willowgarage.com:/wg/wgdata1/people/erublee/catkin-debs
+		rsync --perms --chmod=a+rX  -va $(BUILDDIR)/html/ lou.willowgarage.com:/wg/wgdata1/people/erublee/catkin-rpms
 

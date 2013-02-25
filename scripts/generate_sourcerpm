@@ -13,15 +13,15 @@ from buildfarm import rosdistro
 
 def parse_options():
     import argparse
-    parser = argparse.ArgumentParser(description='Creates a set of source debs from a catkin gbp repo. Creates source debs from the latest upstream version.')
+    parser = argparse.ArgumentParser(description='Creates a set of source RPMs from a catkin release repo. Creates source RPMs from the latest upstream version.')
     parser.add_argument(dest='repo_uri',
             help='A read-only git buildpackage repo uri.')
     parser.add_argument('package_name', help='The package name for the package we\'re building')
     parser.add_argument('rosdistro', help='Which rosdistro to operate on')
-    parser.add_argument('short_package_name', help='The package name for the package we\'re building, w/o the debian extensions')
+    parser.add_argument('short_package_name', help='The package name for the package we\'re building, w/o the Red Hat extensions')
     parser.add_argument('--working', help='A scratch build path. Default: %(default)s', default='/tmp/catkin_gbp')
-    parser.add_argument('--output', help='The result of source deb building will go here. Default: %(default)s', default='/tmp/catkin_debs')
-    parser.add_argument('--repo-fqdn', dest='repo_fqdn', help='The fully qualified domain name of the repo machine. Default: %(default)s', default='50.28.27.175')
+    parser.add_argument('--output', help='The result of source RPM building will go here. Default: %(default)s', default='/tmp/catkin_rpms')
+    parser.add_argument('--repo-fqdn', dest='repo_fqdn', help='The fully qualified domain name of the repo machine. Default: %(default)s', default='csc.mcs.sdsmt.edu')
     parser.add_argument('--repo-path', dest='repo_path', help='The path to find the repo on the machine. Default: %(default)s', default='/var/www/repos/building')
     parser.add_argument('-n', dest='noupload', help='Do not try to upload', action='store_true', default=False)
     
@@ -55,10 +55,10 @@ def update_repo(working_dir, repo_path, repo_uri):
         command = ('gbp-clone', repo_uri)
         call(working_dir, command)
 
-def verify_debian_tag(repo_path, package_name, package_version, distro):
-    tags = call(repo_path, ('git', 'tag', '-l', 'debian/*'), pipe=subprocess.PIPE)
+def verify_redhat_tag(repo_path, package_name, package_version, distro):
+    tags = call(repo_path, ('git', 'tag', '-l', 'redhat/*'), pipe=subprocess.PIPE)
 
-    expected_tag = 'debian/%s_%s_%s'%(package_name, package_version, distro)
+    expected_tag = 'redhat/%s_%s_%s'%(package_name, package_version, distro)
     tag_list = tags.split('\n')
 
     if expected_tag in tag_list:
@@ -67,7 +67,7 @@ def verify_debian_tag(repo_path, package_name, package_version, distro):
         print("No matching tag found. Are you sure you pointed to the right repository or the version is right?, expected %s:\n Tags: %s"%(expected_tag, tags))
     return None
 
-def build_source_deb(repo_path, tag, output):
+def build_source_rpm(repo_path, tag, output):
     call(repo_path, ('git', 'checkout', tag))
     call(repo_path, ('git', 'buildpackage', '--git-export-dir=%s' % output,
         '--git-ignore-new', '-S', '-uc', '-us', '--lintian-opts', '--suppress-tags', 'newer-standards-version'))
@@ -75,12 +75,12 @@ def build_source_deb(repo_path, tag, output):
     call(repo_path, ['ls', output])
 
 def remove_upstream_source(distro, repo_fqdn, repo_path, package):
-    # clear existing debs if they exits
+    # clear existing RPMs if they exits
     cmd = ['ssh', 'rosbuild@%(repo_fqdn)s' %locals(), '--',"( flock 200; /usr/bin/reprepro -b %(repo_path)s --ignore=emptyfilenamepart -V -T dsc removefilter %(distro)s \"Package (== %(package)s ) \" ) 200>%(repo_path)s/lock" %locals()]
     call('/tmp/', cmd)
     
 
-def upload_source_deb(distro, repo_fqdn, repo_path, upload_source, packagename):
+def upload_source_rpm(distro, repo_fqdn, repo_path, upload_source, packagename):
 
 
     upload_dir="/tmp/upload/%s_%s" % (packagename, distro)
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     report_failure = False
     for d in rd.get_target_distros():
 
-        tag = verify_debian_tag(repo_path, args.package_name, package_version, d)
+        tag = verify_redhat_tag(repo_path, args.package_name, package_version, d)
         if not tag:
             print("No tag; bailing")
             report_failure = True
@@ -131,10 +131,10 @@ if __name__ == "__main__":
         output_dir = os.path.join(args.output, d)
         os.makedirs(output_dir)
         try:
-            build_source_deb(repo_path, tag, output_dir)
-            print("successfully created sourcedeb for tag %s on repo %s."%(tag, repo_path))
+            build_source_rpm(repo_path, tag, output_dir)
+            print("successfully created source RPM for tag %s on repo %s."%(tag, repo_path))
         except CalledProcessError, ex:
-            print("Failed to build source deb for tag %s on repo %s: %s"%(tag, repo_path, ex))
+            print("Failed to build source RPM for tag %s on repo %s: %s"%(tag, repo_path, ex))
             report_failure = True
             continue
 
@@ -150,7 +150,7 @@ if __name__ == "__main__":
             # remove upstream so it doesn't error if we're downgrading
             #remove_upstream_source(d, args.repo_fqdn, args.repo_path, args.package_name)
 
-            upload_source_deb(d, args.repo_fqdn, args.repo_path, 
+            upload_source_rpm(d, args.repo_fqdn, args.repo_path, 
                               output_dir,
                               args.package_name
                               )

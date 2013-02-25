@@ -59,10 +59,10 @@ if __name__ == '__main__':
         data['view_url'] = 'http://jenkins.willowgarage.com:8080/view/%s/' % view_name.format(**data)
 
         if is_source:
-            job_name = 'ros-{rosdistro}-{{pkg}}_sourcedeb'
+            job_name = 'ros-{rosdistro}-{{pkg}}_sourcerpm'
         else:
             data['arch'] = jobtype
-            job_name = 'ros-{rosdistro}-{{pkg}}_binarydeb_{distro}_{arch}'
+            job_name = 'ros-{rosdistro}-{{pkg}}_binaryrpm_{distro}_{arch}'
         data['job_url'] = ('{view_url}job/%s/' % job_name).format(**data)
 
         return data

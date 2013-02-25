@@ -32,9 +32,9 @@
 
 from __future__ import print_function
 
-from rospkg.os_detect import OS_UBUNTU
+from rospkg.os_detect import OS_FEDORA
 from rosdep2.catkin_support import get_catkin_view, get_installer, resolve_for_os
-from rosdep2.platforms.debian import APT_INSTALLER
+from rosdep2.platforms.redhat import YUM_INSTALLER
 #NOTE: this code is very similar to code in catkin-generate-distribution and rosrelease
 
 def resolve_rosdeps(rosdep_keys, rosdistro_name, os_name, os_platform):
@@ -43,20 +43,20 @@ def resolve_rosdeps(rosdep_keys, rosdistro_name, os_name, os_platform):
     :raises: :exc:`KeyError`
     :raises: :exc:`rosdep2.ResolutionError`
     """
-    assert os_name == OS_UBUNTU
+    assert os_name == OS_FEDORA
     assert os_platform
     assert type(rosdep_keys) == list
 
     # use the catkin_support module in rosdep2 as it does the same business
 
     # apt-install resolves data
-    apt_installer = get_installer(APT_INSTALLER)
+    yum_installer = get_installer(YUM_INSTALLER)
     # rosdep view is our view into the rosdep database
     rosdep_view = get_catkin_view(rosdistro_name, os_name, os_platform)
 
     # iterate through all our keys to resolve
-    ubuntu_deps = set()
+    fedora_deps = set()
     for dep in rosdep_keys:
-        resolved = resolve_for_os(dep, rosdep_view, apt_installer, os_name, os_platform)
-        ubuntu_deps.update(resolved)
-    return list(ubuntu_deps)
+        resolved = resolve_for_os(dep, rosdep_view, yum_installer, os_name, os_platform)
+        fedora_deps.update(resolved)
+    return list(fedora_deps)
