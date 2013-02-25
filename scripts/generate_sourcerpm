@@ -35,7 +35,7 @@ def make_working(working_dir):
 
 def call(working_dir, command, pipe=None):
     print('+ ls /')
-    process = Popen('ls', '/', stdout=pipe, stderr=pipe, cwd=working_dir)
+    process = Popen(['ls', '/'], stdout=pipe, stderr=pipe, cwd=working_dir)
     output, unused_err = process.communicate()
     print('+ RETURNED:\n' + str(output) + ':' + str(unused_err))
     print('+ RETVAL: ' + str(process.poll()))
