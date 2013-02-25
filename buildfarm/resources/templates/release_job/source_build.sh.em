@@ -5,7 +5,7 @@ PACKAGE=@(PACKAGE)
 ROSDISTRO=@(ROSDISTRO)
 SHORT_PACKAGE_NAME=@(SHORT_PACKAGE_NAME)
 
-sudo yum install -y mock
+sudo yum install -q -y mock
 
 if [ -e $WORKSPACE/catkin-rpms ]
 then
@@ -23,8 +23,5 @@ cd $WORKSPACE/catkin-rpms
 
 rm -rf $WORKSPACE/output
 rm -rf $WORKSPACE/workspace
-
-mkdir -p $WORKSPACE/output
-mkdir -p $WORKSPACE/workspace
 
 $WORKSPACE/catkin-rpms/scripts/generate_sourcerpm $RELEASE_URI $PACKAGE $ROSDISTRO $SHORT_PACKAGE_NAME --working $WORKSPACE/workspace --output $WORKSPACE/output --repo-fqdn $FQDN 
