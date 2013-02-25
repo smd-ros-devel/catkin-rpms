@@ -34,10 +34,10 @@ def make_working(working_dir):
         os.makedirs(working_dir)
 
 def call(working_dir, command, pipe=None):
-    print('+ whoami')
-    process = Popen('whoami', stdout=pipe, stderr=pipe)
+    print('+ pwd')
+    process = Popen('pwd', stdout=pipe, stderr=pipe)
     output, unused_err = process.communicate()
-    print('+ RETURNED:\n' + output)
+    print('+ RETURNED:\n' + str(output))
 
     print('+ cd %s && ' % working_dir + ' '.join(command))
     process = Popen(command, stdout=pipe, stderr=pipe, cwd=working_dir)
