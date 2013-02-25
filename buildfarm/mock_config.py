@@ -79,4 +79,4 @@ if __name__ == "__main__":
 	print('Usage: mock_config.py -d <fedora_version> -a <arch>')
         sys.exit(1)
 
-    print(check_mock_config(distro, arch))
+    print(check_mock_config(distro, arch, quiet=True))
