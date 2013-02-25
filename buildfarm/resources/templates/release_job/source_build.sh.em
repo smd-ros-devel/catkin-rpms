@@ -5,7 +5,8 @@ PACKAGE=@(PACKAGE)
 ROSDISTRO=@(ROSDISTRO)
 SHORT_PACKAGE_NAME=@(SHORT_PACKAGE_NAME)
 
-sudo yum install -y git-buildpackage dput debhelper
+echo "Hello from source_build.sh!"
+sudo yum install -y mock
 
 if [ -e $WORKSPACE/catkin-rpms ]
 then

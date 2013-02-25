@@ -331,7 +331,8 @@ def dry_doit(package, dry_maintainers, distros, arches, fqdn, rosdistro, jobgrap
 
 
 def doit(release_uri, package_name, package, distros, arches, fqdn, job_graph, rosdistro, short_package_name, commit, jenkins_instance):
-    maintainer_emails = [m.email for m in package.maintainers]
+    #maintainer_emails = [m.email for m in package.maintainers]
+    maintainer_emails = ['logans@cottsay.net']
     binary_jobs = binaryrpm_jobs(package_name, maintainer_emails, distros, arches, fqdn, job_graph)
     child_projects = zip(*binary_jobs)[0]  # unzip the binary_jobs tuple
     source_job = sourcerpm_job(package_name, maintainer_emails, distros, fqdn, release_uri, child_projects, rosdistro, short_package_name)

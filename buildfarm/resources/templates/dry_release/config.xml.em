@@ -161,7 +161,7 @@ if (manager.logContains(&quot;.*ERROR: Not all sources were able to be updated.*
       </threshold>
     </hudson.tasks.BuildTrigger>
     <hudson.tasks.Mailer>
-      <recipients>logans@cottsay.net</recipients>
+      <recipients>@(NOTIFICATION_EMAIL)</recipients>
       <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>

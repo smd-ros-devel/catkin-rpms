@@ -253,7 +253,7 @@ if (mark_unstable) {
       <setForMatrix>false</setForMatrix>
     </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
     <hudson.tasks.Mailer>
-      <recipients>logans@cottsay.net</recipients>
+      <recipients>@(NOTIFICATION_EMAIL)</recipients>
       <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>

@@ -522,7 +522,7 @@ def build_debs(distro, stack_name, os_platform, arch, staging_dir, force, nouplo
     if broken.union(skipped):
         raise StackBuildFailure("debbuild did not complete successfully. A list of broken and skipped stacks are below. Broken means the stack itself did not build. Skipped stacks means that the stack's dependencies could not be built.\n\nBroken stacks: %s.  Skipped stacks: %s"%(broken, skipped))
 
-EMAIL_FROM_ADDR = 'ROS debian build system <noreply@willowgarage.com>'
+EMAIL_FROM_ADDR = 'ROS RPM build system <logans@cottsay.net>'
 
 
 def parse_deb_packages(text):
@@ -709,10 +709,10 @@ def single_deb_main():
     parser.add_option("--noupload",
                       dest="noupload", default=False, action="store_true")
     parser.add_option("--fqdn",
-                      dest="fqdn", default='50.28.27.175', action="store")
+                      dest="fqdn", default='csc.mcs.sdsmt.edu', action="store")
     parser.add_option("--interactive",
                       dest="interactive", default=False, action="store_true")
-    parser.add_option('--smtp', dest="smtp", default='pub1.willowgarage.com', metavar="SMTP_SERVER")
+    parser.add_option('--smtp', dest="smtp", default='csc.mcs.sdsmt.edu', metavar="SMTP_SERVER")
 
     (options, args) = parser.parse_args()
 

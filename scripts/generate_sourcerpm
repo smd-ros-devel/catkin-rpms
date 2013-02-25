@@ -19,7 +19,7 @@ def parse_options():
     parser.add_argument('package_name', help='The package name for the package we\'re building')
     parser.add_argument('rosdistro', help='Which rosdistro to operate on')
     parser.add_argument('short_package_name', help='The package name for the package we\'re building, w/o the Red Hat extensions')
-    parser.add_argument('--working', help='A scratch build path. Default: %(default)s', default='/tmp/catkin_gbp')
+    parser.add_argument('--working', help='A scratch build path. Default: %(default)s', default='/tmp/catkin_release')
     parser.add_argument('--output', help='The result of source RPM building will go here. Default: %(default)s', default='/tmp/catkin_rpms')
     parser.add_argument('--repo-fqdn', dest='repo_fqdn', help='The fully qualified domain name of the repo machine. Default: %(default)s', default='csc.mcs.sdsmt.edu')
     parser.add_argument('--repo-path', dest='repo_path', help='The path to find the repo on the machine. Default: %(default)s', default='/var/www/repos/building')
@@ -52,7 +52,7 @@ def update_repo(working_dir, repo_path, repo_uri):
         command = ('git', 'fetch', '--all')
         call(repo_path, command)
     else:
-        command = ('gbp-clone', repo_uri)
+        command = ('git clone', repo_uri)
         call(working_dir, command)
 
 def verify_redhat_tag(repo_path, package_name, package_version, distro):

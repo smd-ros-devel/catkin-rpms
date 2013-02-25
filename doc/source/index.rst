@@ -18,10 +18,10 @@ Contents:
    binaries.rst
    jenkins.rst
 
-To get catkin-debs, use git::
+To get catkin-rpms, use git::
   
-  % git clone git://github.com/willowgarage/catkin-debs.git
-  % cd catkin-debs
+  % git clone git://github.com/smd-ros-devel/catkin-rpms.git
+  % cd catkin-rpms
   % . setup.sh
   % catkin_release.py --help
 

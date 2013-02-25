@@ -55,14 +55,14 @@ from repo import deb_in_repo, load_Packages, get_repo_version, get_stack_version
 NAME = 'list_missing.py' 
 TARBALL_URL = "https://code.ros.org/svn/release/download/stacks/%(stack_name)s/%(base_name)s/%(f_name)s"
 
-REPO_URL="http://packages.ros.org/%(repo)s/"
+REPO_URL="http://csc.mcs.sdsmt.edu/smd-%(repo)s/"
 SHADOW_REPO=REPO_URL%{'repo': 'ros-shadow'}
 SHADOW_FIXED_REPO=REPO_URL%{'repo': 'ros-shadow-fixed'}
 ROS_REPO=REPO_URL%{'repo': 'ros'}
 
-HUDSON='http://build.willowgarage.com/'
+HUDSON='http://151.159.91.137/'
 
-ARCHES = ['i386', 'amd64'] #,'armel'
+ARCHES = ['i386', 'x86_64'] #,'arm'
 
 import traceback
 

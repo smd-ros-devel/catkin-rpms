@@ -52,11 +52,11 @@ if __name__ == '__main__':
             column_label = '{rosdistro_short}src{distro_short}'
             view_name = '{rosdistro_short}src'
         else:
-            data['arch_short'] = {'amd64': '64', 'i386': '32'}[jobtype]
+            data['arch_short'] = {'x86_64': '64', 'i386': '32'}[jobtype]
             column_label = '{rosdistro_short}bin{distro_short}{arch_short}'
             view_name = '{rosdistro_short}bin{distro_short}{arch_short}'
         data['column_label'] = column_label.format(**data)
-        data['view_url'] = 'http://jenkins.willowgarage.com:8080/view/%s/' % view_name.format(**data)
+        data['view_url'] = 'http://151.159.91.137:8080/view/%s/' % view_name.format(**data)
 
         if is_source:
             job_name = 'ros-{rosdistro}-{{pkg}}_sourcerpm'

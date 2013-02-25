@@ -6,7 +6,7 @@ Jenkins is used as the build farm for building debians from catkin based project
 Have a look under ``scripts/jenkins``
 
 ::
-   git clone git://github.com/willowgarage/catkin-debs.git
+   git clone git://github.com/smd-ros-devel/catkin-rpms.git
    export PATH=`pwd`/catkin-debs/scripts/jenkins:$PATH
 
 create_all.py

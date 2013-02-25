@@ -1,6 +1,6 @@
 #!/usr/bin/env python
  
-#COPIED FROM catkin-debs needs to be modularized and released
+#COPIED FROM catkin-rpms needs to be modularized and released
 
 
 from __future__ import print_function
@@ -8,7 +8,7 @@ from __future__ import print_function
 import sys
 import yaml, urllib2
 
-URL_PROTOTYPE="https://raw.github.com/ros/rosdistro/master/releases/%s.yaml"
+URL_PROTOTYPE="https://raw.github.com/smd-ros-release/rosdistro/master/releases/%s.yaml"
 
 class RepoMetadata(object):
     def __init__(self, name, url, version, packages = {}, status = None):
@@ -27,9 +27,7 @@ def sanitize_package_name(name):
     return name.replace('_', '-')
 
 
-def debianize_package_name(rosdistro, name):
-    if rosdistro == 'backports':
-        return sanitize_package_name(name)
+def redhatify_package_name(rosdistro, name):
     return sanitize_package_name("ros-%s-%s"%(rosdistro, name))
 
 
@@ -68,8 +66,8 @@ class Rosdistro:
             else:
                 print("Missing required 'url' or 'version' for %s" % name)
 
-    def debianize_package_name(self, package_name):
-        return debianize_package_name(self._rosdistro, package_name)
+    def redhatify_package_name(self, package_name):
+        return redhatify_package_name(self._rosdistro, package_name)
 
     def get_repo_list(self):
         return self._repoinfo.iterkeys()
@@ -129,7 +127,7 @@ class Rosdistro:
         raise NotImplemented
             
 
-    def compute_rosinstall_snippet(self, local_name, gbp_url, version, distro_name):
+    def compute_rosinstall_snippet(self, local_name, release_url, version, distro_name):
 
         if version is None:
             print ("Error version unset for %s"%local_name)
@@ -138,9 +136,9 @@ class Rosdistro:
         config['local-name'] = local_name
 
         config['version'] = 'upstream/%s'%version
-        config['version'] = 'debian/ros-%s-%s_%s_%s'%(self._rosdistro, local_name, version, distro_name)
+        config['version'] = 'redhat/ros-%s-%s_%s_%s'%(self._rosdistro, local_name, version, distro_name)
         #config['version'] = '%s-%s'%(local_name, version)
-        config['uri'] = gbp_url
+        config['uri'] = release_url
         return {'git': config}
 
 
