@@ -62,7 +62,7 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
     expected_tag = 'redhat/%s_%s_%s'%(package_name, package_version, distro)
     tag_list = []
     for tag in tags.split('\n'):
-        tag_list += [tags.split()[1]]
+        tag_list += [tag.split()[1]]
 
     if expected_tag in tag_list:
         return expected_tag
