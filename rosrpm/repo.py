@@ -33,13 +33,13 @@
 # Revision $Id: repo.py 16975 2012-09-03 05:02:44Z tfoote $
 
 """
-Utilities for reading state from a debian repo
+Utilities for reading state from an RPM repo
 """
 
 import urllib2
 import re
 
-from .core import debianize_name
+from .core import redhatify_name
 
 class BadRepo(Exception): pass
 
@@ -73,7 +73,7 @@ def get_Packages(repo_url, os_platform, arch, cache=None):
     
 def parse_Packages(packagelist):
     """
-    Parse debian Packages list into (package, version, depends) tuples
+    Parse RPM Packages list into (package, version, depends) tuples
     @return: parsed tuples or None if packagelist is None
     """
     package_deps = []
@@ -95,25 +95,25 @@ def parse_Packages(packagelist):
     
 def load_Packages(repo_url, os_platform, arch, cache=None):
     """
-    Download and parse debian Packages list into (package, version, depends) tuples
+    Download and parse RPM Packages list into (package, version, depends) tuples
     """
     return parse_Packages(get_Packages(repo_url, os_platform, arch, cache))
 
-def deb_in_repo(repo_url, deb_name, deb_version, os_platform, arch, use_regex=True, cache=None):
+def rpm_in_repo(repo_url, rpm_name, rpm_version, os_platform, arch, use_regex=True, cache=None):
     """
     @param cache: dictionary to store Packages list for caching
     """
     packagelist = get_Packages(repo_url, os_platform, arch, cache)
     if not use_regex:
-        s = 'Package: %s\nVersion: %s'%(deb_name, deb_version)
+        s = 'Package: %s\nVersion: %s'%(rpm_name, rpm_version)
         return s in packagelist
     else:
-        M = re.search('^Package: %s\nVersion: %s$'%(deb_name, deb_version), packagelist, re.MULTILINE)
+        M = re.search('^Package: %s\nVersion: %s$'%(rpm_name, rpm_version), packagelist, re.MULTILINE)
         return M is not None
 
-def get_depends(repo_url, deb_name, os_platform, arch):
+def get_depends(repo_url, rpm_name, os_platform, arch):
     """
-    Get all debian package dependencies by scraping the Packages
+    Get all RPM package dependencies by scraping the Packages
     list. We mainly use this for invalidation logic. 
     """
     # There is probably something much simpler we could do, but this
@@ -121,7 +121,7 @@ def get_depends(repo_url, deb_name, os_platform, arch):
     # repo.
     package_deps = load_Packages(repo_url, os_platform, arch)
     done = False
-    queue = [deb_name]
+    queue = [rpm_name]
     depends = set()
     # This is not particularly efficient, but it does not need to
     # be. Basically, we find all the packages that depend on the
@@ -142,8 +142,8 @@ def get_stack_version(packageslist, distro_name, stack_name):
     """
     Get the ROS version number of the stack in the repository
     """
-    deb_name = "ros-%s-%s"%(distro_name, debianize_name(stack_name))
-    match = [vm for sm, vm, _, _ in packageslist if sm == deb_name]
+    rpm_name = "ros-%s-%s"%(distro_name, redhatify_name(stack_name))
+    match = [vm for sm, vm, _, _ in packageslist if sm == rpm_name]
     if match:
         return match[0].split('-')[0]
     else:
@@ -151,7 +151,7 @@ def get_stack_version(packageslist, distro_name, stack_name):
 
 def get_repo_version(repo_url, distro, os_platform, arch):
     """
-    Return the greatest build-stamp for any deb in the repository
+    Return the greatest build-stamp for any RPM in the repository
     """
     packagelist = load_Packages(repo_url, os_platform, arch)
     return max(['0'] + [x[1][x[1].find('-')+1:x[1].find('~')] for x in packagelist if x[3] == distro.release_name])

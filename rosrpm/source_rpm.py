@@ -41,18 +41,18 @@ import hashlib
 
 import yaml
 
-from rosdeb.core import debianize_name
+from rosrpm.core import redhatify_name
 
-def make_source_deb(distro_name, stack_name, stack_version, os_platform_name, staging_dir):
+def make_source_rpm(distro_name, stack_name, stack_version, os_platform_name, staging_dir):
     """
     @param os_platform_name: Name of OS platform/version, e.g. 'lucid'
     @type  os_platform_name: str
-    @return: list of source-deb files
+    @return: list of sourcerpm files
     @rtype: [str]
     """
-    debian_name = 'ros-%s-%s'%(distro_name, debianize_name(stack_name))
+    rpm_name = 'ros-%s-%s'%(distro_name, redhatify_name(stack_name))
 
-    tmpl_d = os.path.join(os.path.dirname(__file__), 'resources', 'source_deb')
+    tmpl_d = os.path.join(os.path.dirname(__file__), 'resources', 'sourcerpm')
     
     tarball = os.path.join(staging_dir, "%s-%s.tar.bz2"%(stack_name, stack_version))
     if not os.path.exists(tarball):
@@ -72,12 +72,12 @@ def make_source_deb(distro_name, stack_name, stack_version, os_platform_name, st
         files.append( (os.path.join(tmpl_d, f), os.path.join(debian_d, f)) )
 
     # Files which go into stack dir
-    for f in ['fixpc.py', 'fixbinpath.py', 'fixrpath.py', 'Makefile', 'setup_deb.sh', 'purge_build.py', 'update_version.py', 'gen_versioned_debs.py']:
+    for f in ['fixpc.py', 'fixbinpath.py', 'fixrpath.py', 'Makefile', 'setup_rpm.sh', 'purge_build.py', 'update_version.py', 'gen_versioned_rpms.py']:
         files.append( (os.path.join(tmpl_d, f), os.path.join(stack_d, f)) )
         
     # Files which go into stack dir and are different for ros stack
     if stack_name == 'ros':
-        for f in ['setup_deb.sh', 'Makefile']:
+        for f in ['setup_rpm.sh', 'Makefile']:
             f_src = f+'-ros'
             files.append( (os.path.join(tmpl_d, f_src), os.path.join(stack_d, f)) )
                       
@@ -92,7 +92,7 @@ def make_source_deb(distro_name, stack_name, stack_version, os_platform_name, st
 
         dst_text = src_text.replace('${ROS_DISTRO_NAME}', distro_name)
         dst_text = dst_text.replace('${ROS_STACK_NAME}', stack_name)
-        dst_text = dst_text.replace('${ROS_STACK_DEBIAN_NAME}', debian_name)
+        dst_text = dst_text.replace('${ROS_STACK_DEBIAN_NAME}', rpm_name)
         dst_text = dst_text.replace('${ROS_STACK_VERSION}', stack_version)
         with open(dst, 'w') as f:
             f.write(dst_text)
@@ -109,7 +109,7 @@ def make_source_deb(distro_name, stack_name, stack_version, os_platform_name, st
         raise Exception("invalid control file: %s\nMetadata is [%s]"%(control_yaml, metadata))
 
     # make distro-specific
-    metadata['package'] = debian_name
+    metadata['package'] = rpm_name
     with open(os.path.join(debian_d, 'control'), 'w') as f:
         f.write(control_file(metadata, distro_name, os_platform_name).encode('utf-8'))
 
@@ -135,7 +135,7 @@ def make_source_deb(distro_name, stack_name, stack_version, os_platform_name, st
 
 
     # SOURCE DEB: .dsc plus tarball of debian dir. Ignore the changes for now
-    f_name  = "%s_%s-0~%s"%(debian_name, stack_version, os_platform_name)
+    f_name  = "%s_%s-0~%s"%(rpm_name, stack_version, os_platform_name)
     files = [os.path.join(staging_dir, f_name+ext) for ext in ('.dsc', '.tar.gz')]
     for f in files:
         assert os.path.exists(f), "File: %s does not exist"%f
@@ -161,12 +161,12 @@ def changelog_file(metadata, platform='lucid', build_version='0'):
 \t
 """%data
     
-def deb_depends(metadata, distro_name, platform_name):
+def rpm_depends(metadata, distro_name, platform_name):
     """
-    @return: list of debian package dependencies, or None if not supported on that platform
+    @return: list of RPM package dependencies, or None if not supported on that platform
     @rtype: [str]
     """
-    # if a control file does not specify deb depends for the platform, it is not valid on that platform
+    # if a control file does not specify RPM depends for the platform, it is not valid on that platform
     if 'rosdeps' not in metadata:
         return None
     if platform_name not in metadata['rosdeps']:
@@ -195,7 +195,7 @@ def stack_depends(metadata, distro_name, platform_name):
     @rtype: [str]
     """
     stackdeps = metadata.get('depends', [])
-    stackdeps = ['ros-%s-%s'%(distro_name, debianize_name(s)) for s in stackdeps]
+    stackdeps = ['ros-%s-%s'%(distro_name, redhatify_name(s)) for s in stackdeps]
 
     return stackdeps
         
@@ -216,12 +216,12 @@ def control_file(metadata, distro_name, platform_name):
         data['maintainer'] = data['maintainer'][len('Maintained by '):]
 
     try:
-        depends = deb_depends(metadata, distro_name, platform_name)
+        depends = rpm_depends(metadata, distro_name, platform_name)
         stacks = stack_depends(metadata, distro_name, platform_name)
         if depends is None:
-            raise Exception("stack [%s] does not have valid debian package dependencies for release [%s]"%(metadata['stack'], platform_name))
+            raise Exception("stack [%s] does not have valid RPM package dependencies for release [%s]"%(metadata['stack'], platform_name))
         data['all-depends'] = ', '.join(depends + stacks)
-        data['deb-depends'] = ', '.join(depends)
+        data['rpm-depends'] = ', '.join(depends)
     except KeyError:
         raise Exception("stack [%s] does not have rosdeps for release [%s]"%(metadata['stack'], platform_name))
     
@@ -235,7 +235,7 @@ XBC-WG-rosdistro: %(distro_name)s
 
 Package: %(package)s
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${rosstack:Depends}, %(deb-depends)s
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${rosstack:Depends}, %(rpm-depends)s
 Description: %(description-brief)s
 %(description-full)s
 """%data
