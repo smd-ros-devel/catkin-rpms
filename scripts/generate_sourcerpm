@@ -55,11 +55,14 @@ def update_repo(working_dir, repo_path, repo_uri):
         command = ('git', 'clone', repo_uri)
         call(working_dir, command)
 
-def verify_redhat_tag(repo_path, package_name, package_version, distro):
-    tags = call(repo_path, ('git', 'tag', '-l', 'redhat/*'), pipe=subprocess.PIPE)
+def verify_redhat_tag(repo_uri, package_name, package_version, distro):
+
+    tags = call(repo_path, ('git', 'ls-remote', '--tags', repo_uri, 'redhat/*'), pipe=subprocess.PIPE)
 
     expected_tag = 'redhat/%s_%s_%s'%(package_name, package_version, distro)
     tag_list = tags.split('\n')
+    for tag in tags.split('\n'):
+        tag_list += [tags.split()[1]]
 
     if expected_tag in tag_list:
         return expected_tag
@@ -67,12 +70,10 @@ def verify_redhat_tag(repo_path, package_name, package_version, distro):
         print("No matching tag found. Are you sure you pointed to the right repository or the version is right?, expected %s:\n Tags: %s"%(expected_tag, tags))
     return None
 
-def build_source_rpm(repo_path, tag, output):
-    call(repo_path, ('git', 'checkout', tag))
-    call(repo_path, ('git', 'buildpackage', '--git-export-dir=%s' % output,
-        '--git-ignore-new', '-S', '-uc', '-us', '--lintian-opts', '--suppress-tags', 'newer-standards-version'))
+def build_source_rpm(working_dir, tag, output):
+    call(working_dir, ('mock', '--buildsrpm', '--resultdir', output, '--scm-enable', '--scm-option', 'git_get=\'git clone ' + git_uri + ' ' + packagename + '\'', '--scm-option', 'packge=\'' + packagename + '\'', '--scm-option', 'branch=\'' + tag + '\'')
     print("Successfully created changes in %s"%output)
-    call(repo_path, ['ls', output])
+    call(working_dir, ['ls', output])
 
 def remove_upstream_source(distro, repo_fqdn, repo_path, package):
     # clear existing RPMs if they exits
@@ -115,13 +116,12 @@ if __name__ == "__main__":
     repo_base, extension = os.path.splitext(os.path.basename(args.repo_uri))
     repo_path = os.path.join(args.working, repo_base)
 
-    update_repo(working_dir=args.working, repo_path=repo_path, repo_uri=args.repo_uri)
-
+    #update_repo(working_dir=args.working, repo_path=repo_path, repo_uri=args.repo_uri)
 
     report_failure = False
     for d in rd.get_target_distros():
 
-        tag = verify_redhat_tag(repo_path, args.package_name, package_version, d)
+        tag = verify_redhat_tag(args.repo_uri, args.package_name, package_version, d)
         if not tag:
             print("No tag; bailing")
             report_failure = True
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         output_dir = os.path.join(args.output, d)
         os.makedirs(output_dir)
         try:
-            build_source_rpm(repo_path, tag, output_dir)
+            build_source_rpm(args.working, tag, output_dir)
             print("successfully created source RPM for tag %s on repo %s."%(tag, repo_path))
         except CalledProcessError, ex:
             print("Failed to build source RPM for tag %s on repo %s: %s"%(tag, repo_path, ex))
