@@ -35,7 +35,7 @@ def make_working(working_dir):
 
 def call(working_dir, command, pipe=None):
     print('+ ls -alh %s' % working_dir)
-    process = Popen('ls -alh %' % working_dir, stdout=pipe, stderr=pipe)
+    process = Popen('ls -alh %s' % working_dir, stdout=pipe, stderr=pipe)
     output, unused_err = process.communicate()
     print('+ RETURNED:\n' + output)
 
