@@ -121,7 +121,7 @@ if __name__ == "__main__":
     report_failure = False
     for d in rd.get_target_distros():
 
-        tag = verify_redhat_tag(args.repo_uri, args.working_dir, args.package_name, package_version, d)
+        tag = verify_redhat_tag(args.repo_uri, args.working, args.package_name, package_version, d)
         if not tag:
             print("No tag; bailing")
             report_failure = True
