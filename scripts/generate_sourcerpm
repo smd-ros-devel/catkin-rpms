@@ -10,6 +10,7 @@ import time
 import shutil
 
 from buildfarm import rosdistro
+from rosrpm.core import fedora_release_version
 
 def parse_options():
     import argparse
@@ -71,8 +72,8 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
         print("No matching tag found. Are you sure you pointed to the right repository or the version is right?, expected %s:\n Tags: %s"%(expected_tag, tags))
     return None
 
-def build_source_rpm(working_dir, repo_uri, tag, packagename, output):
-    call(working_dir, ('mock', '--buildsrpm', '--resultdir', output, '--scm-enable', '--scm-option', 'git_get=\'git clone ' + repo_uri + ' ' + packagename + '\'', '--scm-option', 'package=\'' + packagename + '\'', '--scm-option', 'branch=\'' + tag + '\''))
+def build_source_rpm(working_dir, repo_uri, tag, packagename, distro, output):
+    call(working_dir, ('/usr/bin/mock', '--root=\'fedora-' + fedora_release_version(distro) + '-i386\'', '--buildsrpm', '--resultdir', output, '--scm-enable', '--scm-option', 'git_get=\'git clone ' + repo_uri + ' ' + packagename + '\'', '--scm-option', 'package=\'' + packagename + '\'', '--scm-option', 'branch=\'' + tag + '\''))
     print("Successfully created changes in %s"%output)
     call(working_dir, ['ls', output])
 
@@ -132,7 +133,7 @@ if __name__ == "__main__":
         output_dir = os.path.join(args.output, d)
         os.makedirs(output_dir)
         try:
-            build_source_rpm(args.working, args.repo_uri, tag, args.package_name, output_dir)
+            build_source_rpm(args.working, args.repo_uri, tag, args.package_name, d, output_dir)
             print("successfully created source RPM for tag %s on repo %s."%(tag, repo_path))
         except CalledProcessError, ex:
             print("Failed to build source RPM for tag %s on repo %s: %s"%(tag, repo_path, ex))
