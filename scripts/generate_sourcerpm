@@ -35,7 +35,7 @@ def make_working(working_dir):
 
 def call(working_dir, command, pipe=None):
     print('+ pwd')
-    process = Popen('pwd', stdout=pipe, stderr=pipe)
+    process = Popen('pwd', stdout=pipe, stderr=pipe, cwd=working_dir)
     output, unused_err = process.communicate()
     print('+ RETURNED:\n' + str(output) + ':' + str(unused_err))
     print('+ RETVAL: ' + str(process.poll()))
