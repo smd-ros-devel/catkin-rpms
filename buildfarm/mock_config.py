@@ -38,10 +38,12 @@ baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/
 [%(name)s-debug]
 name=%(name)s-debug
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/debug/
+enabled=0
 
 [%(name)s-source]
 name=%(name)s-source
 baseurl=%(repo)s/fedora/linux/%(distro)s/SRPMS/
+enabled=0
 \"\"\"
 """%locals()
 
