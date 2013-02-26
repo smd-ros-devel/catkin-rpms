@@ -34,7 +34,7 @@ MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a
 sudo umount mock_chroot_tmpfs
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --init
 sudo umount mock_chroot_tmpfs
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --copyout /etc/yum.conf $WORKSPACE/workspace/
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --copyout /etc/yum.conf $WORKSPACE/workspace/
 sudo umount mock_chroot_tmpfs
 
 # Pull the sourcerpm
