@@ -73,7 +73,7 @@ println ""
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder plugin="groovy-postbuild@@1.8">
+    <!-- <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder plugin="groovy-postbuild@@1.8">
       <groovyScript>
 // CHECK FOR VARIOUS REASONS TO RETRIGGER JOB
 // also triggered when a build step has failed
@@ -88,7 +88,7 @@ if (manager.logContains(&quot;.*No more mirrors to try.*&quot;)) {
 }
       </groovyScript>
       <behavior>0</behavior>
-    </org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder>
+    </org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder> -->
     <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder plugin="groovy-postbuild@@1.8">
       <groovyScript>
 import java.io.BufferedReader
