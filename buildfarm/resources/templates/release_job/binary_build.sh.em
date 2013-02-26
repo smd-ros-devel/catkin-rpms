@@ -42,21 +42,19 @@ yumdownloader --source --installroot $MOCK_ROOT $PACKAGE
 VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
 echo "package name ${PACKAGE} version ${VERSION}"
 
-#  --binary-arch even if "any" type RPMs produce arch specific RPMs
-#sudo pbuilder  --build \
-#    --basetgz $basetgz \
-#    --buildresult $output_dir \
-#    --debbuildopts \"-b\" \
-#    --hookdir hooks \
-#    *.dsc
+# Actually perform the mockbuild
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild *.src.rpm
+
+# Remove the source RPM (that's already in the repo)
+rm -f $WORKSPACE/output/*.src.rpm
 
 # Upload invalidate and add to the repo
 UPLOAD_DIR=/tmp/upload/${PACKAGE}_${DISTRO}_$ARCH
 
 ssh rosbuild@@$FQDN -- mkdir -p $UPLOAD_DIR
 ssh rosbuild@@$FQDN -- rm -rf $UPLOAD_DIR/*
-#scp -r $output_dir/*$distro* rosbuild@@$ROS_REPO_FQDN:$UPLOAD_DIR
-#ssh rosbuild@@$ROS_REPO_FQDN -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/reprepro_updater/scripts/include_folder.py -d $distro -a $arch -f $UPLOAD_DIR -p $PACKAGE -c --delete --invalidate
+scp -r $WORKSPACE/output/*.rpm rosbuild@@$ROS_REPO_FQDN:$UPLOAD_DIR
+ssh rosbuild@@$ROS_REPO_FQDN -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/repoman/scripts/include_folder.py -d $distro -a $arch -f $UPLOAD_DIR -p $PACKAGE -c --delete --invalidate
 
 # Check that the uploaded successfully
 #sudo $WORKSPACE/catkin-rpms/scripts/assert_package_present.py $rootdir $aptconffile  $PACKAGE
