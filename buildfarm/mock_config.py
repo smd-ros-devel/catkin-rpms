@@ -26,7 +26,7 @@ def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
     arch_config += """
 config_opts['root'] += '-ros'
 """
-    for name, repo in repos:
+    for name, repo in repos.items():
         arch_config += """
 config_opts['yum.conf'] += \"\"\"
 [%(name)s]
