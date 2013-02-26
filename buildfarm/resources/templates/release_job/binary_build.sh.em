@@ -10,8 +10,6 @@ DISTRO=@(DISTRO)
 DISTRO_VER=@(DISTRO_VER)
 ARCH=@(ARCH)
 
-sudo yum install -q -y mock mock-rpmfusion-nonfree
-
 if [ -e $WORKSPACE/catkin-rpms ]
 then
   rm -rf $WORKSPACE/catkin-rpms

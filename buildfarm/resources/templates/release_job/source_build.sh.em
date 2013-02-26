@@ -9,8 +9,6 @@ PACKAGE=@(PACKAGE)
 ROSDISTRO=@(ROSDISTRO)
 SHORT_PACKAGE_NAME=@(SHORT_PACKAGE_NAME)
 
-sudo yum install -q -y mock mock-rpmfusion-nonfree
-
 if [ -e $WORKSPACE/catkin-rpms ]
 then
   rm -rf $WORKSPACE/catkin-rpms
