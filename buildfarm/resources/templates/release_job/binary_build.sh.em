@@ -39,8 +39,8 @@ MOCK_ROOT=`/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTR
 yumdownloader --source --installroot $MOCK_ROOT $PACKAGE
 
 # Extract version number from the source RPM
-version=`rpm --queryformat="%{VERSION}" *.src.rpm`
-echo "package name ${PACKAGE} version ${version}"
+VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
+echo "package name ${PACKAGE} version ${VERSION}"
 
 #  --binary-arch even if "any" type RPMs produce arch specific RPMs
 #sudo pbuilder  --build \
