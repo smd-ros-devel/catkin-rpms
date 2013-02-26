@@ -10,7 +10,7 @@
   </logRotator>
   <keepDependencies>false</keepDependencies>
   <properties>
-    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.7.2">
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@@1.7.2">
       <maxConcurrentPerNode>1</maxConcurrentPerNode>
       <maxConcurrentTotal>1</maxConcurrentTotal>
       <categories>
