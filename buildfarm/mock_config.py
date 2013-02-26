@@ -23,7 +23,7 @@ def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
 
     if arch == 'srpm':
         use_arch = 'i386'
-    else
+    else:
         use_arch = arch
 
     # Arch-specific config
