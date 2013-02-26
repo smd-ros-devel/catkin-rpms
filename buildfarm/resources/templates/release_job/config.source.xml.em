@@ -35,6 +35,18 @@
     </hudson.tasks.Shell>
   </builders>
   <publishers>
+    <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder plugin="groovy-postbuild@@1.8">
+      <groovyScript>
+// CHECK FOR VARIOUS REASONS TO RETRIGGER JOB
+// also triggered when a build step has failed
+import hudson.model.Cause
+if (manager.logContains(&quot;.*ERROR: Build root is locked by another process.*&quot;)) {
+	manager.addInfoBadge("Log contains 'Build root is locked' - scheduled new build...")
+	manager.build.project.scheduleBuild(new Cause.UserIdCause())
+}
+      </groovyScript>
+      <behavior>0</behavior>
+    </org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder>
     <hudson.tasks.BuildTrigger>
       <childProjects>@(','.join(CHILD_PROJECTS))</childProjects>
       <threshold>
