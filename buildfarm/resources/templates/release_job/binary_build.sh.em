@@ -53,8 +53,8 @@ UPLOAD_DIR=/tmp/upload/${PACKAGE}_${DISTRO}_$ARCH
 
 ssh rosbuild@@$FQDN -- mkdir -p $UPLOAD_DIR
 ssh rosbuild@@$FQDN -- rm -rf $UPLOAD_DIR/*
-scp -r $WORKSPACE/output/*.rpm rosbuild@@$ROS_REPO_FQDN:$UPLOAD_DIR
-ssh rosbuild@@$ROS_REPO_FQDN -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/repoman/scripts/include_folder.py -d $distro -a $arch -f $UPLOAD_DIR -p $PACKAGE -c --delete --invalidate
+scp -r $WORKSPACE/output/*.rpm rosbuild@@$FQDN:$UPLOAD_DIR
+ssh rosbuild@@$FQDN -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/repoman/scripts/include_folder.py -d $distro -a $arch -f $UPLOAD_DIR -p $PACKAGE -c --delete --invalidate
 
 # Check that the uploaded successfully
 #sudo $WORKSPACE/catkin-rpms/scripts/assert_package_present.py $rootdir $aptconffile  $PACKAGE
