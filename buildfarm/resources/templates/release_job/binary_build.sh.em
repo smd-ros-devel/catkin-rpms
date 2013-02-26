@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 #stop on error
 set -o errexit
@@ -36,7 +36,7 @@ MOCK_ROOT=`/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTR
 
 # Pull the sourcerpm
 yum --quiet clean headers packages metadata dbcache plugins expire-cache
-yumdownloader --disablerepo="*" --enablerepo=building --source --config $MOCK_ROOT/etc/yum.conf $PACKAGE
+yumdownloader --quiet --disablerepo="*" --enablerepo=building --source --config $MOCK_ROOT/etc/yum.conf $PACKAGE
 
 # Extract version number from the source RPM
 VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
@@ -51,8 +51,8 @@ rm -f $WORKSPACE/output/*.src.rpm
 # Upload invalidate and add to the repo
 UPLOAD_DIR=/tmp/upload/${PACKAGE}_${DISTRO}_$ARCH
 
+ssh rosbuild@@$FQDN -- rm -rf $UPLOAD_DIR
 ssh rosbuild@@$FQDN -- mkdir -p $UPLOAD_DIR
-ssh rosbuild@@$FQDN -- rm -rf $UPLOAD_DIR/*
 scp $WORKSPACE/output/*.rpm rosbuild@@$FQDN:$UPLOAD_DIR
 ssh rosbuild@@$FQDN -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/repoman/scripts/include_folder.py -d $DISTRO_VER -a $ARCH -f $UPLOAD_DIR -p $PACKAGE -c --delete --invalidate
 
