@@ -39,15 +39,18 @@ config_opts['yum.conf'] += \"\"\"
 [%(name)s]
 name=%(name)s
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/
+metadata_expire=1
 
 [%(name)s-debug]
 name=%(name)s-debug
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/debug/
+metadata_expire=1
 enabled=0
 
 [%(name)s-source]
 name=%(name)s-source
 baseurl=%(repo)s/fedora/linux/%(distro)s/SRPMS/
+metadata_expire=1
 enabled=0
 \"\"\"
 """%locals()
