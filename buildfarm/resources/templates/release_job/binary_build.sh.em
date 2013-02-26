@@ -29,13 +29,12 @@ mkdir -p $WORKSPACE/workspace
 cd $WORKSPACE/workspace
 
 # Check and update mock root
+mount | grep -q mock_chroot_tmpfs && sudo umount mock_chroot_tmpfs || echo "mock_chroot_tmpfs is not mounted! hooray!"
 MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a $ARCH`
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --scrub=yum-cache
-sudo umount mock_chroot_tmpfs || echo "Umount failed...this is good."
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --init
-sudo umount mock_chroot_tmpfs || echo "Umount failed...this is good."
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --scrub=yum-cache || sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --init || sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --copyout /etc/yum.conf $WORKSPACE/workspace/
-sudo umount mock_chroot_tmpfs || echo "Umount failed...this is good."
+sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
 
 # Pull the sourcerpm
 yum --quiet clean headers packages metadata dbcache plugins expire-cache
@@ -46,8 +45,7 @@ VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
 echo "package name ${PACKAGE} version ${VERSION}"
 
 # Actually perform the mockbuild
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild *.src.rpm
-sudo umount mock_chroot_tmpfs || echo "Umount failed...this is good."
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild *.src.rpm || sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
 
 # Remove the source RPM (that's already in the repo)
 rm -f $WORKSPACE/output/*.src.rpm
