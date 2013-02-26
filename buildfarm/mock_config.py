@@ -10,7 +10,7 @@ repos = {
 'underlay': 'http://csc.mcs.sdsmt.edu/smd-ros-underlay'
 }
 
-def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
+def check_mock_config(distro, arch='i386', use_ramdisk=True, quiet=False):
     # General Stuff
     user_mock_dir = os.path.join(os.path.expanduser('~'), '.mock_config')
     mock_dir = os.path.normpath('/etc/mock')
@@ -64,7 +64,7 @@ enabled=0
     if use_ramdisk:
         arch_config += """
 config_opts['plugin_conf']['tmpfs_enable'] = True
-config_opts['plugin_conf']['tmpfs_opts']['required_ram_mb'] = 3072
+config_opts['plugin_conf']['tmpfs_opts']['required_ram_mb'] = 4096
 config_opts['plugin_conf']['tmpfs_opts']['max_fs_size'] = '20G'
 """
 
