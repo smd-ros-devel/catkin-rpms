@@ -35,7 +35,8 @@ MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a
 MOCK_ROOT=`/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --print-root-path`
 
 # Pull the sourcerpm
-yumdownloader --source --installroot $MOCK_ROOT $PACKAGE
+yum clean headers packages metadata dbcache plugins expire-cache
+yumdownloader --source --config $MOCK_ROOT/etc/yum.conf $PACKAGE
 
 # Extract version number from the source RPM
 VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
