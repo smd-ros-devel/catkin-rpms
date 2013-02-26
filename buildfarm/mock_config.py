@@ -5,7 +5,9 @@ import sys
 import getopt
 
 repos = {
-'building': 'http://csc.mcs.sdsmt.edu/smd-ros-building'
+'building': 'http://csc.mcs.sdsmt.edu/smd-ros-building',
+# Underlay should only be here until the packages are in the official Fedora repo
+'underlay': 'http://csc.mcs.sdsmt.edu/smd-ros-underlay'
 }
 
 def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
