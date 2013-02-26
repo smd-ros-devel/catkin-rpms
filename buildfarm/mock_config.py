@@ -40,8 +40,8 @@ config_opts['yum.conf'] += \"\"\"
 name=%(name)s
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/
 metadata_expire=1
-http_caching=none
 keepcache=0
+http_caching=none
 
 [%(name)s-debug]
 name=%(name)s-debug
