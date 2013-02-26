@@ -69,7 +69,7 @@ def verify_redhat_tag(repo_uri, working_dir, package_name, package_version, dist
     if expected_tag in tag_list:
         return expected_tag
     else:
-        print("No matching tag found. Are you sure you pointed to the right repository or the version is right?, expected %s:\n Tags: %s"%(expected_tag, tags))
+        print("No matching tag found. Are you sure you pointed to the right repository or the version is right?, expected %s:\nTags:\n%s"%(expected_tag, tags))
     return None
 
 def build_source_rpm(working_dir, repo_uri, tag, packagename, distro, output):
