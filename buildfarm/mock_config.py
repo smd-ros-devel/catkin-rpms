@@ -26,19 +26,19 @@ def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
     arch_config += """
 config_opts['root'] += '-ros'
 """
-    for repo in repos:
+    for name, repo in repos:
         arch_config += """
 config_opts['yum.conf'] += \"\"\"
-[ros-building]
-name=ros-building
+[%(name)s]
+name=%(name)s
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/
 
-[ros-building-debug]
-name=ros-building-debug
+[%(name)s-debug]
+name=%(name)s-debug
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/debug/
 
-[ros-building-source]
-name=ros-building-source
+[%(name)s-source]
+name=%(name)s-source
 baseurl=%(repo)s/fedora/linux/%(distro)s/SRPMS/
 \"\"\"
 """%locals()
