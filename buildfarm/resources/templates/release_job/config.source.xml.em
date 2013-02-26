@@ -10,11 +10,14 @@
   </logRotator>
   <keepDependencies>false</keepDependencies>
   <properties>
-    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@@1.7.2">
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.7.2">
       <maxConcurrentPerNode>1</maxConcurrentPerNode>
-      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <maxConcurrentTotal>1</maxConcurrentTotal>
+      <categories>
+        <string>rpmbuild-srpm</string>
+      </categories>
       <throttleEnabled>true</throttleEnabled>
-      <throttleOption>project</throttleOption>
+      <throttleOption>category</throttleOption>
     </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
   </properties>
   <scm class="hudson.scm.NullSCM"/>
