@@ -61,74 +61,8 @@ println ""
     <hudson.tasks.Shell>
       <command>@(COMMAND)</command>
     </hudson.tasks.Shell>
-    <hudson.plugins.groovy.SystemGroovy plugin="groovy@@1.12">
-      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
-        <command>
-// CHECK FOR "HASH SUM MISMATCH" AND RETRIGGER JOB
-// only triggered when previous build step was successful
-import java.io.BufferedReader
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-
-import hudson.model.Cause
-import hudson.model.Result
-
-println ""
-println "Check for 'Hash Sum mismatch'"
-println ""
-
-build = Thread.currentThread().executable
-
-// search build output for hash sum mismatch
-r = build.getLogReader()
-br = new BufferedReader(r)
-pattern = Pattern.compile(&quot;.*W: Failed to fetch .* Hash Sum mismatch.*&quot;)
-def line
-while ((line = br.readLine()) != null) {
-	if (pattern.matcher(line).matches()) {
-		println "Aborting build due to 'hash sum mismatch'. Immediately rescheduling new build..."
-		println ""
-		build.project.scheduleBuild(new Cause.UserIdCause())
-		throw new InterruptedException()
-	}
-}
-println "Pattern not found in build log"
-println ""
-</command>
-      </scriptSource>
-      <bindings/>
-      <classpath/>
-    </hudson.plugins.groovy.SystemGroovy>
   </builders>
   <publishers>
-    <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder plugin="groovy-postbuild@@1.8">
-      <groovyScript>
-// CHECK FOR VARIOUS REASONS TO RETRIGGER JOB
-// also triggered when a build step has failed
-import hudson.model.Cause
-if (manager.logContains(&quot;.*W: Failed to fetch .* Hash Sum mismatch.*&quot;)) {
-	manager.addInfoBadge("Log contains 'Hash Sum mismatch' - scheduled new build...")
-	manager.build.project.scheduleBuild(new Cause.UserIdCause())
-}
-if (manager.logContains(&quot;.*The lock file '/var/www/repos/building/db/lockfile' already exists.*&quot;)) {
-	manager.addInfoBadge("Log contains 'building/db/lockfile already exists' - scheduled new build...")
-	manager.build.project.scheduleBuild(new Cause.UserIdCause())
-}
-if (manager.logContains(&quot;.*E: Could not get lock /var/lib/dpkg/lock - open \\(11: Resource temporarily unavailable\\).*&quot;)) {
-	manager.addInfoBadge("Log contains 'dpkg/lock temporary unavailable' - scheduled new build...")
-	manager.build.project.scheduleBuild(new Cause.UserIdCause())
-}
-if (manager.logContains(&quot;.*ERROR: cannot download default sources list from:.*&quot;)) {
-	manager.addInfoBadge("Log contains 'cannot download default sources list' - scheduled new build...")
-	manager.build.project.scheduleBuild(new Cause.UserIdCause())
-}
-if (manager.logContains(&quot;.*ERROR: Not all sources were able to be updated.*&quot;)) {
-	manager.addInfoBadge("Log contains 'Not all sources were able to be updated' - scheduled new build...")
-	manager.build.project.scheduleBuild(new Cause.UserIdCause())
-}
-</groovyScript>
-      <behavior>0</behavior>
-    </org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder>
     <org.jvnet.hudson.plugins.groovypostbuild.GroovyPostbuildRecorder plugin="groovy-postbuild@@1.8">
       <groovyScript>
 import java.io.BufferedReader
