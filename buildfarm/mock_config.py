@@ -21,8 +21,13 @@ def check_mock_config(distro, arch='i386', use_ramdisk=False, quiet=False):
     if not os.path.lexists(os.path.join(user_mock_dir, 'logging.ini')):
         os.symlink(os.path.join(mock_dir, 'logging.ini'), os.path.join(user_mock_dir, 'logging.ini'))
 
+    if arch == 'srpm':
+        use_arch = 'i386'
+    else
+        use_arch = arch
+
     # Arch-specific config
-    with open(os.path.join(mock_dir, 'fedora-%s-%s-rpmfusion_nonfree.cfg' % (distro, arch)), 'r') as f:
+    with open(os.path.join(mock_dir, 'fedora-%s-%s-rpmfusion_nonfree.cfg' % (distro, use_arch)), 'r') as f:
         arch_config = f.read()
 
     arch_config += """
@@ -33,11 +38,11 @@ config_opts['root'] += '-ros'
 config_opts['yum.conf'] += \"\"\"
 [%(name)s]
 name=%(name)s
-baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/
+baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/
 
 [%(name)s-debug]
 name=%(name)s-debug
-baseurl=%(repo)s/fedora/linux/%(distro)s/%(arch)s/debug/
+baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/debug/
 enabled=0
 
 [%(name)s-source]
