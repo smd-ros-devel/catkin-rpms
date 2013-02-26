@@ -31,21 +31,23 @@ cd $WORKSPACE/workspace
 # Check and update mock root
 mount | grep -q mock_chroot_tmpfs && sudo umount mock_chroot_tmpfs || echo "mock_chroot_tmpfs is not mounted! hooray!"
 MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a $ARCH`
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --scrub=yum-cache || sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --init || sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --scrub=yum-cache
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --init
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --copyout /etc/yum.conf $WORKSPACE/workspace/
+
+# I think this might be a mock bug...but things don't get umounted after the copyout
 sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
 
 # Pull the sourcerpm
 yum --quiet clean headers packages metadata dbcache plugins expire-cache
-yumdownloader --quiet --disablerepo="*" --enablerepo=building --source --config $WORKSPACE/workspace/yum.conf $PACKAGE
+yumdownloader --quiet --disablerepo="*" --enablerepo=building --source --config $WORKSPACE/workspace/yum.conf --destdir $WORKSPACE/workspace $PACKAGE
 
 # Extract version number from the source RPM
-VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
+VERSION=`rpm --queryformat="%{VERSION}" -qp $WORKSPACE/workspace/*.src.rpm`
 echo "package name ${PACKAGE} version ${VERSION}"
 
 # Actually perform the mockbuild
-/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild *.src.rpm || sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild $WORKSPACE/workspace/*.src.rpm
 
 # Remove the source RPM (that's already in the repo)
 rm -f $WORKSPACE/output/*.src.rpm

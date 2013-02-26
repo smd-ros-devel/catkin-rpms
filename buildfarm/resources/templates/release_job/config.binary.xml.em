@@ -82,8 +82,8 @@ if (manager.logContains(&quot;.*ERROR: Build root is locked by another process.*
 	manager.addInfoBadge("Log contains 'Build root is locked' - scheduled new build...")
 	manager.build.project.scheduleBuild(new Cause.UserIdCause())
 }
-if (manager.logContains(&quot;.*Metadata file does not match checksum.*&quot;)) {
-	manager.addInfoBadge("Log contains 'Build root is locked' - scheduled new build...")
+if (manager.logContains(&quot;.*No more mirrors to try.*&quot;)) {
+	manager.addInfoBadge("Log contains 'Repository error' - scheduled new build...")
 	manager.build.project.scheduleBuild(new Cause.UserIdCause())
 }
       </groovyScript>
