@@ -12,7 +12,7 @@
   <properties>
     <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@@1.7.2">
       <maxConcurrentPerNode>1</maxConcurrentPerNode>
-      <maxConcurrentTotal>1</maxConcurrentTotal>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
       <categories>
         <string>rpmbuild-srpm</string>
       </categories>
