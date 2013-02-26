@@ -40,17 +40,23 @@ config_opts['yum.conf'] += \"\"\"
 name=%(name)s
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/
 metadata_expire=1
+http_caching=none
+keepcache=0
 
 [%(name)s-debug]
 name=%(name)s-debug
 baseurl=%(repo)s/fedora/linux/%(distro)s/%(use_arch)s/debug/
 metadata_expire=1
+keepcache=0
+http_caching=none
 enabled=0
 
 [%(name)s-source]
 name=%(name)s-source
 baseurl=%(repo)s/fedora/linux/%(distro)s/SRPMS/
 metadata_expire=1
+keepcache=0
+http_caching=none
 enabled=0
 \"\"\"
 """%locals()
