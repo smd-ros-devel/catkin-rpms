@@ -31,12 +31,15 @@ cd $WORKSPACE/workspace
 # Check and update mock root
 MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a $ARCH`
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --scrub=yum-cache
+sudo umount mock_chroot_tmpfs
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --init
-MOCK_ROOT=`/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --print-root-path`
+sudo umount mock_chroot_tmpfs
+/usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --copyout /etc/yum.conf $WORKSPACE/workspace/
+sudo umount mock_chroot_tmpfs
 
 # Pull the sourcerpm
 yum --quiet clean headers packages metadata dbcache plugins expire-cache
-yumdownloader --quiet --disablerepo="*" --enablerepo=building --source --config $MOCK_ROOT/etc/yum.conf $PACKAGE
+yumdownloader --quiet --disablerepo="*" --enablerepo=building --source --config $WORKSPACE/workspace/yum.conf $PACKAGE
 
 # Extract version number from the source RPM
 VERSION=`rpm --queryformat="%{VERSION}" -qp *.src.rpm`
@@ -44,6 +47,7 @@ echo "package name ${PACKAGE} version ${VERSION}"
 
 # Actually perform the mockbuild
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild *.src.rpm
+sudo umount mock_chroot_tmpfs
 
 # Remove the source RPM (that's already in the repo)
 rm -f $WORKSPACE/output/*.src.rpm
