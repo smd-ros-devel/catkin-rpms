@@ -81,7 +81,7 @@ echo "Done"</command>
   </builders>
   <publishers>
     <hudson.tasks.BuildTrigger>
-      <childProjects>_disable_non_precise_groovy_rpmbuilds,_groovy-trigger-missing-all</childProjects>
+      <childProjects>_groovy-trigger-missing-all</childProjects>
       <threshold>
         <name>SUCCESS</name>
         <ordinal>0</ordinal>
