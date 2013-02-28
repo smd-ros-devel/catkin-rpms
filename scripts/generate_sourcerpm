@@ -24,6 +24,7 @@ def parse_options():
     parser.add_argument('--output', help='The result of source RPM building will go here. Default: %(default)s', default='/tmp/catkin_rpms')
     parser.add_argument('--repo-fqdn', dest='repo_fqdn', help='The fully qualified domain name of the repo machine. Default: %(default)s', default='csc.mcs.sdsmt.edu')
     parser.add_argument('--repo-path', dest='repo_path', help='The path to find the repo on the machine. Default: %(default)s', default='/var/www/repos/building')
+    parser.add_argument('--distro', dest='distro', help='The Fedora distro to build source RPMs for. Default: All', default=None)
     parser.add_argument('-n', dest='noupload', help='Do not try to upload', action='store_true', default=False)
     
     args = parser.parse_args()
@@ -119,11 +120,19 @@ if __name__ == "__main__":
 
     repo_base, extension = os.path.splitext(os.path.basename(args.repo_uri))
     repo_path = os.path.join(args.working, repo_base)
+    distros = []
 
     #update_repo(working_dir=args.working, repo_path=repo_path, repo_uri=args.repo_uri)
+    if args.distro:
+        if args.distro in rd.get_target_distros():
+            distros += [args.distro]
+        else:
+            print("%s is not a valid Fedora distro for %d; Skipping"%(args.distro, args.rosdistro))
+    else:
+        distros += rd.get_target_distros()
 
     report_failure = False
-    for d in rd.get_target_distros():
+    for d in distros:
 
         tag = verify_redhat_tag(args.repo_uri, args.working, args.package_name, package_version, d)
         if not tag:
