@@ -3,7 +3,7 @@ os_platform = {
     'unstable': [],
     'groovy': ['spherical'],
     'fuerte': [],
-    'electric': [],
+    'electric': ['beefy'],
     'diamondback': [],
     'cturtle': [],
 # no longer supported
@@ -15,7 +15,7 @@ os_test_platform = {
     'unstable': [],
     'groovy': ['spherical'],
     'fuerte': [],
-    'electric': [],
+    'electric': ['beefy'],
     'diamondback': [],
     'cturtle': [],
 }

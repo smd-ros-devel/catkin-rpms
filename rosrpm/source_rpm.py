@@ -45,7 +45,7 @@ from rosrpm.core import redhatify_name
 
 def make_source_rpm(distro_name, stack_name, stack_version, os_platform_name, staging_dir):
     """
-    @param os_platform_name: Name of OS platform/version, e.g. 'lucid'
+    @param os_platform_name: Name of OS platform/version, e.g. 'spherical'
     @type  os_platform_name: str
     @return: list of sourcerpm files
     @rtype: [str]

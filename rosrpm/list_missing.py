@@ -32,7 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-Build debs for a package and all of its dependencies as necessary
+Build RPMs for a package and all of its dependencies as necessary
 """
 
 import os
@@ -49,8 +49,8 @@ import tempfile
 import time
 import rospkg.distro
 
-from core import redhatify_name, redhatify_version
-from repo import deb_in_repo, load_Packages, get_repo_version, get_stack_version, BadRepo
+from core import redhatify_name, redhatify_version, fedora_release_version
+from repo import rpm_in_repo, load_Packages, get_repo_version, get_stack_version, BadRepo
 
 NAME = 'list_missing.py' 
 TARBALL_URL = "https://code.ros.org/svn/release/download/stacks/%(stack_name)s/%(base_name)s/%(f_name)s"
@@ -60,7 +60,7 @@ SHADOW_REPO=REPO_URL%{'repo': 'ros-shadow'}
 SHADOW_FIXED_REPO=REPO_URL%{'repo': 'ros-shadow-fixed'}
 ROS_REPO=REPO_URL%{'repo': 'ros'}
 
-HUDSON='http://151.159.91.137/'
+JENKINS='http://151.159.91.137/'
 
 ARCHES = ['i386', 'x86_64'] #,'arm'
 
@@ -160,14 +160,14 @@ def compute_missing_depends(stack_name, distro, os_platform, arch, repo=SHADOW_R
     #don't include self
     deps = set([(sn, sv) for (sn, sv) in deps if not sn == stack_name])
     for sn, sv in deps:
-        deb_name = "ros-%s-%s"%(distro.release_name, redhatify_name(sn))
+        rpm_name = "ros-%s-%s"%(distro.release_name, redhatify_name(sn))
         # see if there's a dry version
-        deb_version = '[0-9.-]*-[st][0-9]+~[a-z]+' 
-        if not deb_in_repo(repo, deb_name, deb_version, os_platform, arch, use_regex=True):
+        rpm_version = '[0-9.-]*-[st][0-9]+\.fc[0-9]+' 
+        if not rpm_in_repo(repo, rpm_name, rpm_version, os_platform, arch, use_regex=True):
             # now test for wet version
-            wet_deb_version = '[0-9.]*-[0-9a-z]+-[0-9]+-[0-9]+-\+0000'
-            if not deb_in_repo(repo, deb_name, wet_deb_version, os_platform, arch, use_regex=True):
-                missing_deps.add(deb_name)
+            wet_rpm_version = '[0-9.]*-[0-9a-z]+-[0-9]+-[0-9]+-\+0000'
+            if not rpm_in_repo(repo, rpm_name, wet_rpm_version, os_platform, arch, use_regex=True):
+                missing_deps.add(rpm_name)
 
     return missing_deps
 
@@ -191,12 +191,12 @@ def get_missing(distro, os_platform, arch, repo=SHADOW_REPO, lock_version=True):
         if not sv:
             missing_primary.add(sn)
             continue
-        deb_name = "ros-%s-%s"%(distro_name, redhatify_name(sn))
+        rpm_name = "ros-%s-%s"%(distro_name, redhatify_name(sn))
         if lock_version:
-            deb_version = redhatify_version(sv, '\w*', os_platform)
+            rpm_version = redhatify_version(sv, '\w*', os_platform)
         else:
-            deb_version = '[0-9.]*-[st][0-9]+~[a-z]+'
-        if not deb_in_repo(repo, deb_name, deb_version, os_platform, arch, use_regex=True):
+            rpm_version = '[0-9.]*-[st][0-9]+\.fc[0-9]+'
+        if not rpm_in_repo(repo, rpm_name, rpm_version, os_platform, arch, use_regex=True):
             try:
                 si = load_info(sn, sv)
                 depends = set(si['depends'])
@@ -253,8 +253,8 @@ def load_distro(distro_name):
     "Load the distro from the URL"
     return rospkg.distro.load_distro(rospkg.distro.distro_uri(distro_name))
 
-SOURCERPM_DIR_URI = 'https://code.ros.org/svn/release/download/stacks/%(stack_name)s/%(stack_name)s-%(stack_version)s/'
-SOURCERPM_URI = SOURCERPM_DIR_URI+'%(deb_name)s_%(stack_version)s-0~%(os_platform)s.dsc'
+SOURCERPM_DIR_URI = 'http://csc.mcs.sdsmt.edu/svn/release/download/stacks/%(stack_name)s/%(stack_name)s-%(stack_version)s/'
+SOURCERPM_URI = SOURCERPM_DIR_URI+'%(rpm_name)s-%(stack_version)s-0.fc%(os_version)s.src.rpm'
     
 MISSING_REPO = '*'
 MISSING_SOURCERPM = '!'
@@ -277,20 +277,21 @@ COLORS = {
 
 def sourcerpm_url(distro, stack_name, os_platform):
     # have to setup locals for substitution
+    os_version = fedora_release_version(os_platform)
     distro_name = distro.release_name
     stack_version = distro.stacks[stack_name].version
-    deb_name = "ros-%s-%s"%(distro_name, redhatify_name(stack_name))
+    rpm_name = "ros-%s-%s"%(distro_name, redhatify_name(stack_name))
     return SOURCERPM_URI%locals()
 
 def get_html_legend():
-    return """<h2>Stack Debbuild Status</h2>
+    return """<h2>Stack RPMbuild Status</h2>
 <h3>Legend</h3>
 <ul>
 <li>Missing (sourcerpm): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
-<li>Missing (deb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
+<li>Missing (rpm): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Depends Missing: <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
-<li>Broken (deb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
-<li>Depends Broken (deb): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
+<li>Broken (rpm): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
+<li>Depends Broken (rpm): <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Excluded: <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li>
 <li>Depends Excluded: <span style="background-color: %s;">&nbsp;%s&nbsp;</span></li> 
 </ul>"""%(COLORS[MISSING_SOURCERPM], MISSING_SOURCERPM, 
@@ -387,14 +388,14 @@ def get_html_repository_status(distro, os_platforms, arches):
     b.write("</table>")
     return b.getvalue()
 
-def sourcerpm_job_url(h, distro_name, stack, stack_version):
+def sourcerpm_job_url(jenk, distro_name, stack, stack_version):
     params = {'STACK_NAME': stack, 'DISTRO_NAME': distro_name,'STACK_VERSION': stack_version}
-    return h.build_job_url('rpmbuild-sourcerpm', parameters=params)                            
+    return jenk.build_job_url('rpmbuild-sourcerpm', parameters=params)                            
     
 
 def generate_allhtml_report(output, distro_name, os_platforms):
-    import hudson
-    h = hudson.Hudson(HUDSON)
+    import jenkins
+    jenk = jenkins.Jenkins(JENKINS)
     distro = load_distro(distro_name)
 
     main_repo = {}
@@ -475,8 +476,8 @@ def generate_allhtml_report(output, distro_name, os_platforms):
         f.write(get_html_header(distro_name))
         f.write(get_html_repository_status(distro, os_platforms, arches))
         f.write(get_html_legend())
-        job = 'rpmbuild-build-debs'
-        f.write(get_html_table_header(h, distro_name, os_platforms, arches, counts, job))
+        job = 'rpmbuild-build-rpms'
+        f.write(get_html_table_header(jenk, distro_name, os_platforms, arches, counts, job))
         
         stack_names = sorted(stacks.keys())
         for stack in stack_names:
@@ -493,13 +494,13 @@ def generate_allhtml_report(output, distro_name, os_platforms):
             sample_key = "%s-%s"%(os_platforms[0], arches[0])
             if sample_key in d and d[sample_key] == MISSING_SOURCERPM:
                 color = COLORS[d[sample_key]]
-                job_url = sourcerpm_job_url(h, distro_name, stack, shadow_version)
+                job_url = sourcerpm_job_url(jenk, distro_name, stack, shadow_version)
                 f.write('<tr><td bgcolor="%s"><a href="%s">%s %s</a> <a href="%s">[+]</a></td>'%(color, url, stack, shadow_version, job_url))
             else:
                 if 0:
                     f.write('<tr><td><a href="%s">%s %s</a></td>'%(url, stack, shadow_version))
                 else:
-                    job_url = sourcerpm_job_url(h, distro_name, stack, shadow_version)
+                    job_url = sourcerpm_job_url(jenk, distro_name, stack, shadow_version)
                     # temporarily including [+] for all right now to help bringup maverick
                     f.write('<tr><td><a href="%s">%s %s</a> <a href="%s">[+]</a></td>'%(url, stack, shadow_version, job_url)) 
                 
@@ -526,7 +527,7 @@ def generate_allhtml_report(output, distro_name, os_platforms):
                         if val == MISSING_SOURCERPM:
                             f.write('<td bgcolor="%s">%s %s</td>'%(color, val, version_str))
                         else:
-                            url = h.build_job_url('%s-%s-%s-%s'%(job, distro_name, os_platform, arch),
+                            url = jenk.build_job_url('%s-%s-%s-%s'%(job, distro_name, os_platform, arch),
                                                   parameters=params)
                             f.write('<td bgcolor="%s">%s <a href="%s">[+]</a> %s</td>'%
                                     (color, val, url, version_str))
@@ -572,7 +573,7 @@ def list_missing_main():
         missing_primary = None
         missing_dep = None
         for os_platform in targets:
-            for arch in ['amd64', 'i386']:
+            for arch in ['x86_64', 'i386']:
                 list_missing(distro, os_platform, arch)
                 print '-'*80
                 

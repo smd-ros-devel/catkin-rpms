@@ -7,13 +7,12 @@ import os
 import sys
 import time
 
-from buildfarm.status_page import bin_arches, build_repo_caches, get_distro_arches, render_csv, ros_repos, transform_csv_to_html
-
+from buildfarm.status_page import bin_arches, get_distro_arches, render_csv, ros_repos, transform_csv_to_html
+from rosrpm.core import fedora_release_version
 
 def parse_options(args=sys.argv[1:]):
     p = argparse.ArgumentParser(description='Generate the HTML page showing the package build status.')
     p.add_argument('--basedir', default='/tmp/build_status_page', help='Root directory containing ROS apt caches. This should be created using the build_caches command.')
-    p.add_argument('--skip-fetch', action='store_true', help='Skip fetching the apt data.')
     p.add_argument('--skip-csv', action='store_true', help='Skip generating .csv file.')
     p.add_argument('rosdistro', default='groovy', help='The ROS distro to generate the status page for (i.e. groovy).')
     return p.parse_args(args)
@@ -24,16 +23,10 @@ if __name__ == '__main__':
 
     start_time = time.localtime()
 
-    if not args.skip_fetch:
-        print('Fetching apt data (this will take some time)...')
-        build_repo_caches(args.basedir, ros_repos, get_distro_arches(bin_arches, args.rosdistro))
-    else:
-        print('Skip fetching apt data')
-
     csv_file = os.path.join(args.basedir, '%s.csv' % args.rosdistro)
     if not args.skip_csv:
         print('Generating .csv file...')
-        render_csv(args.basedir, csv_file, args.rosdistro)
+        render_csv(csv_file, args.rosdistro)
     elif not os.path.exists(csv_file):
         print('.csv file "%s" is missing. Call script without "--skip-csv".' % csv_file, file=sys.stderr)
     else:
@@ -45,16 +38,17 @@ if __name__ == '__main__':
             'rosdistro': args.rosdistro,
             'rosdistro_short': args.rosdistro[0].upper(),
             'distro': distro,
-            'distro_short': distro[0].upper()
+            'distro_short': distro[0].upper(),
+            'distro_ver': fedora_release_version(distro)
         }
-        is_source = jobtype == 'source'
+        is_source = jobtype == 'SRPMS'
         if is_source:
             column_label = '{rosdistro_short}src{distro_short}'
             view_name = '{rosdistro_short}src'
         else:
             data['arch_short'] = {'x86_64': '64', 'i386': '32'}[jobtype]
-            column_label = '{rosdistro_short}bin{distro_short}{arch_short}'
-            view_name = '{rosdistro_short}bin{distro_short}{arch_short}'
+            column_label = '{rosdistro_short}binF{distro_ver}x{arch_short}'
+            view_name = '{rosdistro_short}binF{distro_ver}x{arch_short}'
         data['column_label'] = column_label.format(**data)
         data['view_url'] = 'http://151.159.91.137:8080/view/%s/' % view_name.format(**data)
 

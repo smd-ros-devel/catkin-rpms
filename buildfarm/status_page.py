@@ -8,33 +8,29 @@ import time
 import urllib2
 import yaml
 
-import apt
+#import apt
 import numpy as np
 
-import buildfarm.apt_root
+#import buildfarm.apt_root
 import buildfarm.rosdistro
 from rospkg.distro import distro_uri
+from rosrpm.repo import load_Packages
 
-ros_repos = {'ros': 'http://csc.mcs.sdsmt.edu/smd-ros/fedora/',
-             'shadow-fixed': 'http://csc.mcs.sdsmt.edu/smd-ros-shadow-fixed/fedora/',
+ros_repos = {'ros': 'http://csc.mcs.sdsmt.edu/smd-ros',
+             'shadow-fixed': 'http://csc.mcs.sdsmt.edu/smd-ros-shadow-fixed',
              'building': 'http://csc.mcs.sdsmt.edu/smd-ros-building'}
 
 version_rx = re.compile(r'[0-9.-]+[0-9]')
 
-def get_repo_da_caches(rootdir, ros_repo_names, da_strs):
+def get_repo_da_caches(ros_repo_names, da_strs):
     '''
-    Returns [(repo_name, da_str, cache_dir), ...]
+Returns [(repo_name, da_str, cache), ...]
 
-    For example, get_repo_da_caches('/tmp/ros_yum_caches', ['ros', 'shadow-fixed'], ['spherical_i386'])
-    '''
-    return [(ros_repo_name, da_str, get_repo_cache_dir_name(rootdir, ros_repo_name, da_str))
+For example, get_repo_da_caches(['ros', 'shadow-fixed'], ['spherical_i386'])
+'''
+    return [(ros_repo_name, da_str, None)
             for ros_repo_name in ros_repo_names
             for da_str in da_strs]
-
-def get_apt_cache(dirname):
-    c = apt.Cache(rootdir=dirname)
-    c.open()
-    return c
 
 def get_ros_repo_names(ros_repos):
     return ros_repos.keys()
@@ -61,7 +57,7 @@ def make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs, repo_name
     non_ros_pkg_names = set([])
     ros_pkg_names = set([buildfarm.rosdistro.redhatify_package_name(rosdistro, pkg[0]) for pkg in ros_pkgs_table])
     for pkgs in repo_name_da_to_pkgs.values():
-        pkg_names = set([pkg.name for pkg in pkgs])
+        pkg_names = set([pkg[0] for pkg in pkgs])
         non_ros_pkg_names |= pkg_names - ros_pkg_names
 
     table = np.empty(len(ros_pkgs_table) + len(non_ros_pkg_names), dtype=columns)
@@ -75,6 +71,8 @@ def make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs, repo_name
 
     i = len(ros_pkgs_table)
     for pkg_name in non_ros_pkg_names:
+        print pkg_name
+        print rosdistro
         unredhatified_pkg_name = buildfarm.rosdistro.unredhatify_package_name(rosdistro, pkg_name)
         table['name'][i] = ununredhatified_pkg_name
         table['version'][i] = ''
@@ -112,18 +110,14 @@ def strip_version_suffix(version):
 
 def get_pkg_version(da_str, repo_name_da_to_pkgs, repo_name, name, rosdistro):
     rpm_name = buildfarm.rosdistro.redhatify_package_name(rosdistro, name)
-    if da_str.endswith('source'):
-        # Get the source version from the corresponding amd64 package.
-        amd64_da_str = da_str.replace('source', 'x86_64')
-        p = get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, amd64_da_str)
-        return getattr(getattr(p, 'candidate', None), 'source_version', None)
-    else:
-        p = get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, da_str)
-        return getattr(getattr(p, 'candidate', None), 'version', None)
+    p = get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, da_str)
+    if p is not None:
+        return p[1]
+    return None
 
 def get_matching_pkg(repo_name_da_to_pkgs, rpm_name, repo_name, da_str):
     pkgs = repo_name_da_to_pkgs.get((repo_name, da_str), [])
-    matching_pkgs = [p for p in pkgs if p.name == rpm_name]
+    matching_pkgs = [p for p in pkgs if p[0] == rpm_name]
     if not matching_pkgs:
         logging.debug('No package found with name %s on %s repo, %s',
                       rpm_name, repo_name, da_str)
@@ -142,34 +136,6 @@ def get_ros_pkgs_table(wet_names_versions, dry_names_versions):
 
 def get_dist_arch_str(d, a):
     return "%s_%s" % (d, a)
-
-def get_repo_cache_dir_name(rootdir, ros_repo_name, dist_arch):
-    return os.path.join(rootdir, ros_repo_name, dist_arch)
-
-def build_repo_caches(rootdir, ros_repos, distro_arches):
-    '''
-    Builds (or rebuilds) local caches for ROS yum repos.
-
-    For example, build_repo_caches('/tmp/ros_yum_caches', ros_repos,
-                                   get_distro_arches())
-    '''
-    for repo_name, url in ros_repos.items():
-        for distro, arch in distro_arches:
-            dist_arch = get_dist_arch_str(distro, arch)
-            dir = get_repo_cache_dir_name(rootdir, repo_name, dist_arch)
-            build_repo_cache(dir, repo_name, url, distro, arch)
-
-def build_repo_cache(dir, ros_repo_name, ros_repo_url, distro, arch):
-    logging.info('Setting up a yum directory at %s', dir)
-    repo_dict = {ros_repo_name: ros_repo_url}
-    buildfarm.apt_root.setup_apt_rootdir(dir, distro, arch,
-                                         additional_repos=repo_dict)
-    logging.info('Getting a list of packages for %s-%s', distro, arch)
-    cache = apt.Cache(rootdir=dir)
-    cache.open()
-    cache.update()
-    # Have to open the cache again after updating.
-    cache.open()
 
 def get_wet_names_versions(rosdistro):
     rd = buildfarm.rosdistro.Rosdistro(rosdistro)
@@ -196,30 +162,28 @@ def get_dry_names_packages(rosdistro):
     dry_yaml = yaml.load(urllib2.urlopen(distro_uri(rosdistro)))
     return [(name, d) for name, d in dry_yaml['stacks'].items() if name != '_rules']
 
-def get_pkgs_from_apt_cache(cache_dir, substring):
-    cache = apt.Cache(rootdir=cache_dir)
-    cache.open()
-    return [cache[name] for name in cache.keys() if name.startswith(substring)]
-
-def render_csv(rootdir, outfile, rosdistro):
-    arches = bin_arches + ['source']
-    da_strs = get_da_strs(get_distro_arches(arches, rosdistro))
+def render_csv(outfile, rosdistro):
+    arches = bin_arches + ['SRPMS']
+    da_strs = []
     ros_repo_names = get_ros_repo_names(ros_repos)
-    repo_da_caches = get_repo_da_caches(rootdir, ros_repo_names, da_strs)
     wet_names_versions = get_wet_names_versions(rosdistro)
     dry_names_versions = get_dry_names_versions(rosdistro)
     ros_pkgs_table = get_ros_pkgs_table(wet_names_versions, dry_names_versions)
 
-    # Get the version of each Debian package in each ROS apt repository.
-    repo_name_da_to_pkgs = dict(((repo_name, da_str), get_pkgs_from_apt_cache(cache, 'ros-%s-' % rosdistro))
-                                for repo_name, da_str, cache in repo_da_caches)
+    # Get the version of each RPM package in each ROS RPM repository.
+    repo_name_da_to_pkgs = dict()
+    for da in get_distro_arches(arches, rosdistro):
+        da_str = get_dist_arch_str(da[0], da[1])
+        da_strs += [da_str]
+        for repo_name in ros_repo_names:
+            repo_name_da_to_pkgs[(repo_name, da_str)] = [p for p in load_Packages(ros_repos[repo_name], da[0], da[1]) if p[0].startswith('ros-%s-'%rosdistro)]
+        
 
     # Make an in-memory table showing the latest RPM version for each package.
     t = make_versions_table(ros_pkgs_table, repo_name_da_to_pkgs, da_strs,
                             ros_repos.keys(), rosdistro)
 
     with open(outfile , 'w') as fh:
-
         # Output CSV from the in-memory table
         w = csv.writer(fh)
         w.writerow(t.dtype.names) 
@@ -280,7 +244,8 @@ def format_row(row, metadata_columns):
     if row[2] == 'unknown':
         metadata = [None for _ in range(len(metadata))]
     if row[2] == 'False':  # dry
-        metadata[3] = metadata[6] = metadata[9] = None
+        #metadata[3] = metadata[6] = metadata[9] = None
+        metadata[3] = None
     job_urls = [md['job_url'].format(pkg=row[0].replace('_', '-')) if md else None for md in metadata]
 
     type_ = get_wet_column(row)
@@ -290,7 +255,8 @@ def format_row(row, metadata_columns):
     row = row[:2] + [type_] + [format_versions_cell(row[i], latest_version, job_urls[i], public_changing_on_sync[i]) for i in range(3, len(row))]
     if has_diff_between_rosdistros:
         row[0] += ' <span class="hiddentext">diff</span>'
-    row[3] = row[6] = row[9] = ''
+    #row[3] = row[6] = row[9] = ''
+    row[3] = ''
 
     return row
 

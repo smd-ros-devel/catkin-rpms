@@ -38,8 +38,11 @@ Utilities for reading state from an RPM repo
 
 import urllib2
 import re
+from xml.dom import minidom
+from StringIO import StringIO
+from gzip import GzipFile
 
-from .core import redhatify_name
+from core import redhatify_name, fedora_release_version
 
 class BadRepo(Exception): pass
 
@@ -58,17 +61,29 @@ def get_Packages(repo_url, os_platform, arch, cache=None):
     # repo has a subdirectory ubuntu.  I can't parameterize it out
     # without potentially breaking a lot. Using an if statement to get
     # it to work.
-    if 'packages.ros.org/ros' in repo_url or 'shadow' in repo_url:
-        packages_url = repo_url + '/ubuntu/dists/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
+    os_version = fedora_release_version(os_platform)
+    base_url = repo_url + '/fedora/linux/%(os_version)s/%(arch)s'%locals()
+    if base_url in cache:
+        return cache[base_url]
     else:
-        packages_url = repo_url + '/dists/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
-    if packages_url in cache:
-        return cache[packages_url]
-    else:
+        repomd_url = base_url + '/repodata/repomd.xml'
+
         try:
-            cache[packages_url] = retval = urllib2.urlopen(packages_url).read()
+            repomd = urllib2.urlopen(repomd_url).read()
         except urllib2.HTTPError:
-            raise BadRepo("[%s]: %s"%(repo_url, packages_url))
+            raise BadRepo("[%s]: %s"%(repo_url, repomd_url))
+
+        try:
+            for data_entry in minidom.parseString(repomd).getElementsByTagName('data'):
+                if data_entry.getAttribute('type') == 'primary':
+                    packages_url = base_url + '/' + data_entry.getElementsByTagName('location')[0].getAttribute('href')
+        except:
+            raise BadRepo("[%s]: XML Parse Error %s"%(repo_url, repomd_url))
+
+        try:
+            cache[base_url] = retval = minidom.parseString(GzipFile(fileobj=StringIO((urllib2.urlopen(packages_url).read()))).read())
+        except urllib2.HTTPError:
+            raise BadRepo("[%s]: %s"%(repo_url, base_url))
     return retval
     
 def parse_Packages(packagelist):
@@ -78,21 +93,25 @@ def parse_Packages(packagelist):
     """
     package_deps = []
     package = deps = version = distro = None
-    for l in packagelist.split('\n'):
-        if l.startswith('Package: '):
-            package = l[len('Package: '):]
-        elif l.startswith('Version: '):
-            version = l[len('Version: '):]
-        elif l.startswith('Depends: '):
-            deps = l[len('Depends: '):].split(',')
-            deps = [d.strip() for d in deps]
-        elif l.lower().startswith('wg-rosdistro: '):
-            distro = l[len('wg-rosdistro: '):]
-        if package != None and version != None and deps != None and distro != None:
-            package_deps.append((package, version, deps, distro))
-            package = version = deps = distro = None
+    for package in packagelist.getElementsByTagName('package'):
+        if package.getAttribute('type') != 'rpm':
+            continue
+        name = package.getElementsByTagName('name')[0].firstChild
+        name_split = name.data.split('-')
+        if name_split[0] != 'ros':
+            continue
+        version = package.getElementsByTagName('version')[0]
+        deps = []
+
+        for l1 in package.getElementsByTagName('format'):
+            for l2 in l1.getElementsByTagName('rpm:requires'):
+                for dep in l2.getElementsByTagName('rpm:entry'):
+                    if dep.getAttribute('name')[0] == '/':
+                        continue
+                    deps.append(dep.getAttribute('name'))
+        package_deps.append((name.data, version.getAttribute('ver') + '-' + version.getAttribute('rel'), deps, name_split[1]))
     return package_deps
-    
+
 def load_Packages(repo_url, os_platform, arch, cache=None):
     """
     Download and parse RPM Packages list into (package, version, depends) tuples
@@ -105,11 +124,18 @@ def rpm_in_repo(repo_url, rpm_name, rpm_version, os_platform, arch, use_regex=Tr
     """
     packagelist = get_Packages(repo_url, os_platform, arch, cache)
     if not use_regex:
-        s = 'Package: %s\nVersion: %s'%(rpm_name, rpm_version)
-        return s in packagelist
+        for package in packagelist.getElementsByTagName('package'):
+            if package.getElementsByTagName('name')[0].firstChild.data == rpm_name:
+                version = package.getElementsByTagName('version')[0]
+                if version.getAttribute('ver') + '-' + version.getAttribute('rel') == rpm_version:
+                    return True
     else:
-        M = re.search('^Package: %s\nVersion: %s$'%(rpm_name, rpm_version), packagelist, re.MULTILINE)
-        return M is not None
+        for package in packagelist.getElementsByTagName('package'):
+            if re.search(rpm_name, package.getElementsByTagName('name')[0].firstChild.data) is not None:
+                version = package.getElementsByTagName('version')[0]
+                if re.search(rpm_version, version.getAttribute('ver') + '-' + version.getAttribute('rel')) is not None:
+                    return True
+    return None
 
 def get_depends(repo_url, rpm_name, os_platform, arch):
     """
@@ -154,5 +180,5 @@ def get_repo_version(repo_url, distro, os_platform, arch):
     Return the greatest build-stamp for any RPM in the repository
     """
     packagelist = load_Packages(repo_url, os_platform, arch)
-    return max(['0'] + [x[1][x[1].find('-')+1:x[1].find('~')] for x in packagelist if x[3] == distro.release_name])
+    return max(['0'] + [x[1][x[1].find('-')+1:x[1].find('.fc')] for x in packagelist if x[3] == distro.release_name])
 

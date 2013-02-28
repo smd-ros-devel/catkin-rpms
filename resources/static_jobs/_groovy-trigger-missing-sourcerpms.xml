@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><project>
   <actions/>
-  <description>Trigger sourcerpm jobs with missing Debian packages for Groovy.&#13;
+  <description>Trigger sourcerpm jobs with missing RPM packages for Groovy.&#13;
 &#13;
 Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
   <logRotator>

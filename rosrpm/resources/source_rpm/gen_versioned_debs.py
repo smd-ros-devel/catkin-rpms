@@ -34,8 +34,8 @@ def main(argv, stdout, environ):
   
   for stk in depends_1(stack):
     version = None
-    debname = "ros-%s-%s"%(distro, stk.replace('_','-'))
-    cmd = subprocess.Popen(['dpkg', '-s', debname], stdout=subprocess.PIPE)
+    rpmname = "ros-%s-%s"%(distro, stk.replace('_','-'))
+    cmd = subprocess.Popen(['dpkg', '-s', rpmname], stdout=subprocess.PIPE)
     o,e = cmd.communicate()
     if cmd.returncode != 0:
       raise "Could not find dependency version number"
@@ -43,7 +43,7 @@ def main(argv, stdout, environ):
       if l.startswith('Version:'):
         version = l.split()[1].strip()
     if version:
-      deps.append("%s (= %s)"%(debname,version))
+      deps.append("%s (= %s)"%(rpmname,version))
     else:
       raise "Could not find dependency version number"
 
