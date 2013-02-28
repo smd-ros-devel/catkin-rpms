@@ -63,13 +63,20 @@ Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in 
     <hudson.tasks.Shell>
       <command>#!/bin/bash
 
-#whoami
-#sudo apt-get update
-#sudo apt-get install -y python-vcstools
-dpkg -l | grep vcstools
+#stop on error
+set -o errexit
 
 source ./setup.sh
-./scripts/create_release_jobs.py groovy --repo-work $WORKSPACE/groovyrepo/ --commit --delete</command>
+
+echo "Cleaning up"
+rm -rf $WORKSPACE/groovyrepo
+
+mkdir -p $WORKSPACE/groovyrepo
+
+echo "Reconfiguring Jenkins jobs"
+./scripts/create_release_jobs.py groovy --wet-only --repo-work $WORKSPACE/groovyrepo/ --commit --delete
+
+echo "Done"</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
