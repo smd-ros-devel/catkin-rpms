@@ -35,13 +35,13 @@ if __name__ == "__main__":
             if not srpm:
                 missing.append(p)
                 print "No SRPM file found for package %s"%p
-
-            for dep in srpm[0][2]:
-                dep_name_only = dep.split()[0]
-                dep_srpm = [r for r in pkgs['SRPMS'] if r[0] == dep_name_only]
-                if not dep_srpm:
-                    print "package %s does not have dependency [%s]"%(p, dep_name_only)
-                    missing.append(dep_name_only)
+            else:
+                for dep in srpm[0][2]:
+                    dep_name_only = dep.split()[0]
+                    dep_srpm = [r for r in pkgs['SRPMS'] if r[0] == dep_name_only]
+                    if not dep_srpm:
+                        print "package %s does not have dependency [%s]"%(p, dep_name_only)
+                        missing.append(dep_name_only)
 
         except Exception, ex:
             print "Exception processing package %s: %s"%(p, ex)
