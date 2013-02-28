@@ -1,11 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?><project>
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
   <actions/>
-  <description>Delete subdirectories on each connected slave which is not associated with an active job.&#13;
-See this thread for more info: http://jenkins.361315.n4.nabble.com/Workspace-cleanup-after-job-removal-td4628469.html&#13;
-&#13;
+  <description>Delete subdirectories on each connected slave which is not associated with an active job.&#xd;
+See this thread for more info: http://jenkins.361315.n4.nabble.com/Workspace-cleanup-after-job-removal-td4628469.html&#xd;
+&#xd;
 Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.7.2">
+      <maxConcurrentPerNode>1</maxConcurrentPerNode>
+      <maxConcurrentTotal>1</maxConcurrentTotal>
+      <throttleEnabled>true</throttleEnabled>
+      <throttleOption>project</throttleOption>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
   <scm class="hudson.scm.NullSCM"/>
   <assignedNode>master</assignedNode>
   <canRoam>false</canRoam>
@@ -100,14 +108,14 @@ for (slave in jenkins.slaves)
     }
   }
 }
-</command>
+        </command>
       </scriptSource>
       <bindings>dryRun = false</bindings>
       <classpath></classpath>
     </hudson.plugins.groovy.SystemGroovy>
   </builders>
   <publishers>
-    <hudson.tasks.Mailer>
+    <hudson.tasks.Mailer plugin="mailer@1.4">
       <recipients>logans@cottsay.net</recipients>
       <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
