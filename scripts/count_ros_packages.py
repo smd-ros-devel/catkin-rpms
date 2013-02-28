@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import buildfarm.repo
+import rosrpm.repo
 import sys
 
 def parse_options():
@@ -9,7 +9,7 @@ def parse_options():
     parser.add_argument("rosdistro",
            help='The ros distro. electric, fuerte, groovy')
     parser.add_argument("distro",
-           help='Ubuntu distro lucid, precise, etc')
+           help='Fedora distro beefy, spherical, etc')
     parser.add_argument("arch",
            help='The arch x86_64 i386')
     parser.add_argument('--repo', dest='repo_url', action='store', default='http://csc.mcs.sdsmt.edu/smd-ros-building',
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
 
 
-    count = buildfarm.repo.count_packages(args.repo_url, args.rosdistro, args.distro, args.arch)
+    count = rosrpm.repo.count_packages(args.repo_url, args.rosdistro, args.distro, args.arch)
     print "Found %d packages matching: %s" % (count, args)
 
     min_num = int(args.count)

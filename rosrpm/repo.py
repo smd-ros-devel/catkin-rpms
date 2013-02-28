@@ -57,10 +57,6 @@ def get_Packages(repo_url, os_platform, arch, cache=None):
     if cache is None:
         cache = _Packages_cache
 
-    # this is very bad.  This script is assuming the layout of the
-    # repo has a subdirectory ubuntu.  I can't parameterize it out
-    # without potentially breaking a lot. Using an if statement to get
-    # it to work.
     os_version = fedora_release_version(os_platform)
     base_url = repo_url + '/fedora/linux/%(os_version)s/%(arch)s'%locals()
     if base_url in cache:
@@ -117,6 +113,10 @@ def load_Packages(repo_url, os_platform, arch, cache=None):
     Download and parse RPM Packages list into (package, version, depends) tuples
     """
     return parse_Packages(get_Packages(repo_url, os_platform, arch, cache))
+
+def count_packages(repo_url, rosdistro, os_platform, arch, cache=None):
+    pkgs = load_Packages(repo_url, os_platform, arch, cache)
+    return len([pkg for pkg in pkgs if pkg[0].startswith('ros-%s-'%rosdistro)])
 
 def rpm_in_repo(repo_url, rpm_name, rpm_version, os_platform, arch, use_regex=True, cache=None):
     """

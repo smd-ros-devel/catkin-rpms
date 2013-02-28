@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import apt
 import os
 import argparse
 import sys
@@ -9,31 +8,26 @@ import shutil
 import tempfile
 import yaml
 
+from rosrpm.repo import rpm_in_repo
+
 def parse_options():
     parser = argparse.ArgumentParser(description="Return 0 if all packages are found in the repository, else print missing packages and return 1.")
-    parser.add_argument(dest="rootdir",
-                        help='The directory for apt to use as a rootdir')
-    parser.add_argument(dest="aptconffile",
-                        help='The aptconffile which points to the rootdir')
+    parser.add_argument(dest="repo_url",
+                        help='repository to query for package(s)')
+    parser.add_argument(dest="distro",
+                        help='Fedora distribution of target repository (eg \'spherical\' or \'beefy\')')
+    parser.add_argument(dest="arch",
+                        help='Architecture of target repository (eg \'i386\' or \'x86_64\')')
     parser.add_argument(dest="packages", nargs='+',
                         help="what packages to test for.")
-    parser.add_argument("-u", "--update", dest="update", action='store_true', default=False,
-                        help="update the cache from the server")
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_options()
 
-    c = apt.Cache(rootdir=args.rootdir)
-    if args.update:
-        c.update()
-
-    c.open() # required to recall open after updating or you will query the old data
-
-
     for p in args.packages:
         failure = False
-        if not c.has_key(p):
+        if not rpm_in_repo(args.repo_url, p, '.*', args.distro, args.arch):
             print "Package %s missing in repo." %p
             failure = True
 

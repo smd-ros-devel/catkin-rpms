@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import apt
 import os
 import argparse
 import sys
@@ -9,64 +8,44 @@ import shutil
 import tempfile
 import yaml
 
+from rosrpm.repo import load_Packages
+
 def parse_options():
     parser = argparse.ArgumentParser(description="Return 0 if all packages are found in the repository, else print missing packages and return 1.")
-    parser.add_argument(dest="rootdir",
-                        help='The directory for yum to use as a rootdir')
-    parser.add_argument(dest="yumconffile",
-                        help='The yumconffile which points to the rootdir')
+    parser.add_argument(dest="repo_url",
+                        help='repository to query for package(s)')
+    parser.add_argument(dest="distro",
+                        help='Fedora distribution of target repository (eg \'spherical\' or \'beefy\')')
     parser.add_argument(dest="packages", nargs='+',
                         help="what packages to test for.")
-    parser.add_argument("-u", "--update", dest="update", action='store_true', default=False,
-                        help="update the cache from the server")
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_options()
 
-    #cmd = 'apt-get update -c %s'%args.aptconffile
-    #subprocess.call(cmd.split())
-
-    c = apt.Cache(rootdir=args.rootdir)
-    if args.update:
-        c.update()
-
-    c.open() # required to recall open after updating or you will query the old data
-
-
+    pkgs = {
+        'SRPMS':load_Packages(args.repo_url, args.distro, 'SRPMS'),
+        'i386':load_Packages(args.repo_url, args.distro, 'i386'),
+        'x86_64':load_Packages(args.repo_url, args.distro, 'x86_64')
+    }
     missing = []
     for p in args.packages:
-        tdir = tempfile.mkdtemp()
         try:
-            cmd = 'apt-get source %s -c %s'%(p, args.aptconffile)
-            subprocess.check_call(cmd.split(), cwd=tdir)
-            dir_list =  os.listdir(tdir)
-            dsc_file = None
-            for entry in dir_list:
-                if '.dsc' in entry:
-                    dsc_file = os.path.join(tdir, entry)
-                pass
-
-            if not dsc_file:
+            srpm = [r for r in pkgs['SRPMS'] if r[0] == p]
+            if not srpm:
                 missing.append(p)
-                print "No DSC file fetched for package %p"%p
+                print "No SRPM file found for package %s"%p
 
-            with open(dsc_file, 'r') as dsc:
-                y = yaml.load(dsc.read())
-                build_depends = y['Build-Depends'].split(',')
-
-                for dep in [dep.strip() for dep in build_depends]:
-                    dep_name_only = dep.split()[0]
-                    if not c.has_key(dep_name_only):
-                        print "package %s does not have dependency [%s]"%(p, dep_name_only)
-                        missing.append(dep_name_only)
+            for dep in srpm[0][2]:
+                dep_name_only = dep.split()[0]
+                dep_srpm = [r for r in pkgs['SRPMS'] if r[0] == dep_name_only]
+                if not dep_srpm:
+                    print "package %s does not have dependency [%s]"%(p, dep_name_only)
+                    missing.append(dep_name_only)
 
         except Exception, ex:
             print "Exception processing package %s: %s"%(p, ex)
             missing.append(p)
-        finally:
-            shutil.rmtree(tdir)
-
 
     if missing:
         print "Dependencies not satisfied for packages: %s"%missing
