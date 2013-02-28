@@ -1,22 +1,30 @@
-<?xml version="1.0" encoding="UTF-8"?><project>
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
   <actions/>
-  <description>Reconfigure release jobs for Groovy.&#13;
-&#13;
+  <description>Reconfigure release jobs for Groovy.&#xd;
+&#xd;
 Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in the repository.</description>
-  <logRotator>
+  <logRotator class="hudson.tasks.LogRotator">
     <daysToKeep>30</daysToKeep>
     <numToKeep>10</numToKeep>
     <artifactDaysToKeep>-1</artifactDaysToKeep>
     <artifactNumToKeep>-1</artifactNumToKeep>
   </logRotator>
   <keepDependencies>false</keepDependencies>
-  <properties/>
-  <scm class="hudson.plugins.git.GitSCM" plugin="git@1.1.25">
+  <properties>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.7.2">
+      <maxConcurrentPerNode>1</maxConcurrentPerNode>
+      <maxConcurrentTotal>1</maxConcurrentTotal>
+      <throttleEnabled>true</throttleEnabled>
+      <throttleOption>project</throttleOption>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@1.2.0">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <name/>
-        <refspec/>
+        <name></name>
+        <refspec></refspec>
         <url>https://github.com/smd-ros-devel/catkin-rpms.git</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
@@ -38,15 +46,15 @@ Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in 
     <buildChooser class="hudson.plugins.git.util.DefaultBuildChooser"/>
     <gitTool>Default</gitTool>
     <submoduleCfg class="list"/>
-    <relativeTargetDir/>
-    <reference/>
-    <excludedRegions/>
-    <excludedUsers/>
-    <gitConfigName/>
-    <gitConfigEmail/>
+    <relativeTargetDir></relativeTargetDir>
+    <reference></reference>
+    <excludedRegions></excludedRegions>
+    <excludedUsers></excludedUsers>
+    <gitConfigName></gitConfigName>
+    <gitConfigEmail></gitConfigEmail>
     <skipTag>false</skipTag>
-    <includedRegions/>
-    <scmName/>
+    <includedRegions></includedRegions>
+    <scmName></scmName>
   </scm>
   <assignedNode>master</assignedNode>
   <canRoam>false</canRoam>
@@ -68,15 +76,15 @@ set -o errexit
 
 source ./setup.sh
 
-echo "Cleaning up"
+echo &quot;Cleaning up&quot;
 rm -rf $WORKSPACE/groovyrepo
 
 mkdir -p $WORKSPACE/groovyrepo
 
-echo "Reconfiguring Jenkins jobs"
+echo &quot;Reconfiguring Jenkins jobs&quot;
 ./scripts/create_release_jobs.py groovy --wet-only --repo-work $WORKSPACE/groovyrepo/ --commit --delete
 
-echo "Done"</command>
+echo &quot;Done&quot;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
@@ -88,7 +96,7 @@ echo "Done"</command>
         <color>BLUE</color>
       </threshold>
     </hudson.tasks.BuildTrigger>
-    <hudson.tasks.Mailer>
+    <hudson.tasks.Mailer plugin="mailer@1.4">
       <recipients>logans@cottsay.net</recipients>
       <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
