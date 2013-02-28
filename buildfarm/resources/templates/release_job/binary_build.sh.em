@@ -3,7 +3,6 @@
 #stop on error
 set -o errexit
 
-
 FQDN=@(FQDN)
 PACKAGE=@(PACKAGE)
 DISTRO=@(DISTRO)
@@ -15,11 +14,13 @@ then
   rm -rf $WORKSPACE/catkin-rpms
 fi
 
+echo "Fetching catkin-rpms"
 git clone git://github.com/smd-ros-devel/catkin-rpms.git $WORKSPACE/catkin-rpms -b master --depth 1
 
 cd $WORKSPACE/catkin-rpms
 . setup.sh
 
+echo "Cleaning up"
 rm -rf $WORKSPACE/output
 rm -rf $WORKSPACE/workspace
 
@@ -29,6 +30,7 @@ mkdir -p $WORKSPACE/workspace
 cd $WORKSPACE/workspace
 
 # Check and update mock root
+echo "Configuring mock"
 mount | grep -q mock_chroot_tmpfs && sudo umount mock_chroot_tmpfs || echo "mock_chroot_tmpfs is not mounted! hooray!"
 MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a $ARCH`
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output --scrub=yum-cache
@@ -39,14 +41,16 @@ MOCK_USER_DIR=`$WORKSPACE/catkin-rpms/buildfarm/mock_config.py -d $DISTRO_VER -a
 sudo umount mock_chroot_tmpfs || echo "Umount failed...this is OK"
 
 # Pull the sourcerpm
+echo "Fetching SRPM"
 yum --quiet clean headers packages metadata dbcache plugins expire-cache
 yumdownloader --quiet --disablerepo="*" --enablerepo=building --source --config $WORKSPACE/workspace/yum.conf --destdir $WORKSPACE/workspace $PACKAGE
 
 # Extract version number from the source RPM
 VERSION=`rpm --queryformat="%{VERSION}" -qp $WORKSPACE/workspace/*.src.rpm`
-echo "package name ${PACKAGE} version ${VERSION}"
+echo "Package name: ${PACKAGE} version: ${VERSION}"
 
 # Actually perform the mockbuild
+echo "Building package in mock"
 /usr/bin/mock --quiet --configdir $MOCK_USER_DIR --root fedora-$DISTRO_VER-$ARCH-ros --resultdir $WORKSPACE/output  --rebuild $WORKSPACE/workspace/*.src.rpm
 
 # Remove the source RPM (that's already in the repo)
@@ -55,10 +59,14 @@ rm -f $WORKSPACE/output/*.src.rpm
 # Upload invalidate and add to the repo
 UPLOAD_DIR=/tmp/upload/${PACKAGE}_${DISTRO}_$ARCH
 
+echo "Uploading binary RPMs"
 ssh rosbuild@@$FQDN -- rm -rf $UPLOAD_DIR
 ssh rosbuild@@$FQDN -- mkdir -p $UPLOAD_DIR
 scp $WORKSPACE/output/*.rpm rosbuild@@$FQDN:$UPLOAD_DIR
+echo "Updating repository"
 ssh rosbuild@@$FQDN -- PYTHONPATH=/home/rosbuild/reprepro_updater/src python /home/rosbuild/repoman/scripts/include_folder.py -d $DISTRO_VER -a $ARCH -f $UPLOAD_DIR -p $PACKAGE -c --delete --invalidate
 
 # Check that the uploaded successfully
 #sudo $WORKSPACE/catkin-rpms/scripts/assert_package_present.py $rootdir $aptconffile  $PACKAGE
+
+echo "Done"

@@ -25,18 +25,33 @@ Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in 
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>#!/bin/bash -x
+      <command>#!/bin/bash
 
 #stop on error
 set -o errexit
 
-rm -rf catkin-rpms
-git clone git://github.com/smd-ros-devel/catkin-rpms.git -b master
+if [ -e $WORKSPACE/catkin-rpms ]
+then
+  rm -rf $WORKSPACE/catkin-rpms
+fi
+
+echo "Fetching catkin-rpms"
+git clone git://github.com/smd-ros-devel/catkin-rpms.git $WORKSPACE/catkin-rpms -b master --depth 1
 
 export PYTHONPATH=$WORKSPACE/catkin-rpms
-$WORKSPACE/catkin-rpms/scripts/generate_status_page.py groovy --basedir $WORKSPACE/groovy_yum_cache
 
-scp -o StrictHostKeyChecking=no $WORKSPACE/groovy_apt_cache/groovy.* wgs32:/var/www/www.ros.org/html/rpmbuild/</command>
+echo "Cleaning up"
+rm -rf $WORKSPACE/groovy_rpm_status
+
+mkdir -p $WORKSPACE/groovy_rpm_status
+
+echo "Generating status page"
+$WORKSPACE/catkin-rpms/scripts/generate_status_page.py groovy --basedir $WORKSPACE/groovy_rpm_status
+
+echo "Uploading status page"
+scp $WORKSPACE/groovy_rpm_status/groovy.* rosbuild@csc.mcs.sdsmt.edu:/mnt/storage/ros_build_status/
+
+echo "Done"</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
