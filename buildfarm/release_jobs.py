@@ -17,8 +17,9 @@ from rospkg.distro import load_distro, distro_uri
 from rosdistro import redhatify_package_name, Rosdistro
 
 from rosrpm.core import fedora_release_version
+from rosrpm import repo
 
-from . import repo, jenkins_support
+from . import jenkins_support
 
 import jenkins
 
@@ -38,10 +39,10 @@ def expand(config_template, d):
     return s
 
 
-def compute_missing(distros, arches, fqdn, rosdistro, sourcerpm_only=False):
+def compute_missing(distros, arches, fqdn, rosdistro, sourcerpm_only=False, wet_only=False):
     """ Compute what packages are missing from a repo based on the rosdistro files, both wet and dry. """
 
-    repo_url = 'http://%s/repos/building' % fqdn
+    repo_url = 'http://%s/smd-ros-building' % fqdn
 
     rd = Rosdistro(rosdistro)
     # We take the intersection of repo-specific targets with default
@@ -62,14 +63,15 @@ def compute_missing(distros, arches, fqdn, rosdistro, sourcerpm_only=False):
 
         missing[short_package_name] = []
         for d in target_distros:
-            if not repo.rpm_in_repo(repo_url, rpm_name, str(expected_version) + d, d, arch='na', source=True):
-                missing[short_package_name].append('%s_source' % d)
+            d_ver = fedora_release_version(d)
+            if not repo.rpm_in_repo(repo_url, rpm_name, str(expected_version) + "\.fc" + d_ver, d, 'SRPMS'):
+                missing[short_package_name].append((d, 'SRPMS'))
             if not sourcerpm_only:
                 for a in arches:
-                    if not repo.rpm_in_repo(repo_url, rpm_name, str(expected_version) + ".*", d, a):
-                        missing[short_package_name].append('%s_%s' % (d, a))
+                    if not repo.rpm_in_repo(repo_url, rpm_name, str(expected_version) + "\.fc" + d_ver, d, a):
+                        missing[short_package_name].append((d, a))
 
-    if not sourcerpm_only:
+    if not sourcerpm_only and not wet_only:
         #dry stacks
         # dry dependencies
         dist = load_distro(distro_uri(rosdistro))
@@ -89,15 +91,14 @@ def compute_missing(distros, arches, fqdn, rosdistro, sourcerpm_only=False):
             missing[s] = []
             # for each distro arch check if the RPM is present. If not trigger the build.
             for (d, a) in distro_arches:
-                if not repo.rpm_in_repo(repo_url, redhatify_package_name(rosdistro, s), expected_version + ".*", d, a):
-                    missing[s].append('%s_%s' % (d, a))
+                if not repo.rpm_in_repo(repo_url, redhatify_package_name(rosdistro, s), expected_version + "\.fc" + fedora_release_version(d), d, a):
+                    missing[s].append((d, a))
 
     return missing
 
 
 # dry dependencies
 def dry_get_stack_info(stackname, version):
-    # TODO: FIX THIS
     y = urllib.urlopen('https://csc.mcs.sdsmt.edu/svn/release/download/stacks/%(stackname)s/%(stackname)s-%(version)s/%(stackname)s-%(version)s.yaml' % locals())
     return yaml.load(y.read())
 
@@ -194,13 +195,11 @@ def create_jenkins_job(jobname, config, jenkins_instance):
         return False
 
 
-def sourcerpm_job_name(packagename):
-    return "%(packagename)s_sourcerpm" % locals()
+def sourcerpm_job_name(packagename, distro):
+    return "%(packagename)s_sourcerpm_%(distro)s" % locals()
 
 
 def create_sourcerpm_config(d):
-    #Create the bash script the runs inside the job
-    #need the command to be safe for xml.
     d['COMMAND'] = escape(expand(Templates.command_sourcerpm, d))
     d['TIMESTAMP'] = datetime.datetime.now()
     return expand(Templates.config_sourcerpm, d)
@@ -280,10 +279,10 @@ def binaryrpm_jobs(package, maintainer_emails, distros, arches, fqdn, jobgraph):
     )
     jobs = []
     for distro in distros:
+        d['DISTRO'] = distro
+        d['DISTRO_VER'] = fedora_release_version(distro)
         for arch in arches:
             d['ARCH'] = arch
-            d['DISTRO'] = distro
-            d['DISTRO_VER'] = fedora_release_version(distro)
             d["CHILD_PROJECTS"] = calc_child_jobs(package, distro, arch, jobgraph)
             d["DEPENDENTS"] = add_dependent_to_dict(package, jobgraph)
             config = create_binaryrpm_config(d)
@@ -293,7 +292,7 @@ def binaryrpm_jobs(package, maintainer_emails, distros, arches, fqdn, jobgraph):
     return jobs
 
 
-def sourcerpm_job(package, maintainer_emails, distros, fqdn, release_uri, child_projects, rosdistro, short_package_name):
+def sourcerpm_jobs(package, maintainer_emails, distros, fqdn, release_uri, child_projects, rosdistro, short_package_name):
     jenkins_config = jenkins_support.load_server_config_file(jenkins_support.get_default_catkin_rpms_config())
 
     d = dict(
@@ -308,7 +307,12 @@ def sourcerpm_job(package, maintainer_emails, distros, fqdn, release_uri, child_
         SHORT_PACKAGE_NAME=short_package_name,
         USERNAME=jenkins_config.username
     )
-    return  (sourcerpm_job_name(package), create_sourcerpm_config(d))
+    jobs = []
+    for distro in distros:
+        d['DISTRO'] = distro
+        d['DISTRO_VER'] = fedora_release_version(distro)
+        jobs.append((sourcerpm_job_name(package, distro), create_sourcerpm_config(d)))
+    return jobs
 
 
 def dry_doit(package, dry_maintainers, distros, arches, fqdn, rosdistro, jobgraph, commit, jenkins_instance, packages_for_sync):
@@ -335,12 +339,11 @@ def dry_doit(package, dry_maintainers, distros, arches, fqdn, rosdistro, jobgrap
 
 
 def doit(release_uri, package_name, package, distros, arches, fqdn, job_graph, rosdistro, short_package_name, commit, jenkins_instance):
-    #maintainer_emails = [m.email for m in package.maintainers]
     maintainer_emails = ['logans@cottsay.net']
     binary_jobs = binaryrpm_jobs(package_name, maintainer_emails, distros, arches, fqdn, job_graph)
     child_projects = zip(*binary_jobs)[0]  # unzip the binary_jobs tuple
-    source_job = sourcerpm_job(package_name, maintainer_emails, distros, fqdn, release_uri, child_projects, rosdistro, short_package_name)
-    jobs = [source_job] + binary_jobs
+    source_jobs = sourcerpm_jobs(package_name, maintainer_emails, distros, fqdn, release_uri, child_projects, rosdistro, short_package_name)
+    jobs = source_jobs + binary_jobs
     successful_jobs = []
     failed_jobs = []
     for job_name, config in jobs:

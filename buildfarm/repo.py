@@ -63,10 +63,7 @@ def get_Packages(repo_url, os_platform, arch, cache=None):
     # repo has a subdirectory ubuntu.  I can't parameterize it out
     # without potentially breaking a lot. Using an if statement to get
     # it to work.
-    if 'csc.mcs.sdsmt.edu/smd-ros' in repo_url or 'shadow' in repo_url:
-        packages_url = repo_url + '/fedora/linux/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
-    else:
-        packages_url = repo_url + '/linux/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
+    packages_url = repo_url + '/fedora/linux/%(os_platform)s/main/binary-%(arch)s/Packages'%locals()
     if packages_url in cache:
         return cache[packages_url]
     else:

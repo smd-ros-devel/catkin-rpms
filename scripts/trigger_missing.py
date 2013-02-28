@@ -27,20 +27,22 @@ def parse_options():
            default=['i386','x86_64'])
     parser.add_argument('--sourcerpm-only', action='store_true', default=False,
            help='Only check sourcerpm jobs. Default: all')
+    parser.add_argument('--wet-only', action='store_true', default=False,
+           help='Only check wet package jobs. Default: all')
     parser.add_argument('--commit', dest='commit',
            help='Really?', action='store_true')
     return parser.parse_args()
 
 
 def trigger_if_necessary(da, pkg, rosdistro, jenkins_instance, missing_by_arch):
-    if da != 'source' and 'source' in missing_by_arch and pkg in missing_by_arch['source']:
-        print ("  Skipping trigger of binaryrpm job for package '%s' on arch '%s' as the sourcerpm job will trigger them automatically" % (pkg, da))
+    if da[1] != 'SRPMS' and da in missing_by_arch and pkg in missing_by_arch[(da[0], 'SRPMS')]:
+        print ("  Skipping trigger of binaryrpm job for package '%s' on arch '%s' as the sourcerpm job will trigger them automatically" % (pkg, '_'.join(da)))
         return False
 
-    if da == 'source':
-        job_name = '%s_sourcerpm' % (redhatify_package_name(rosdistro, pkg))
+    if da[1] == 'SRPMS':
+        job_name = '%s_sourcerpm_%s' % (redhatify_package_name(rosdistro, pkg), da[0])
     else:
-        job_name = '%s_binaryrpm_%s' % (redhatify_package_name(rosdistro, pkg), da)
+        job_name = '%s_binaryrpm_%s' % (redhatify_package_name(rosdistro, pkg), '_'.join(da))
     job_info = jenkins_instance.get_job_info(job_name)
 
     if 'color' in job_info and 'anime' in job_info['color']:
@@ -51,10 +53,10 @@ def trigger_if_necessary(da, pkg, rosdistro, jenkins_instance, missing_by_arch):
         print ("  Skipping trigger of job '%s' because it's already queued" % job_name)
         return False
 
-    if da != 'source' and 'upstreamProjects' in job_info:
+    if da[1] != 'SRPMS' and 'upstreamProjects' in job_info:
         upstream = job_info['upstreamProjects']
         for p in missing_by_arch[da]:
-            p_name = '%s_binaryrpm_%s' % (redhatify_package_name(rosdistro, p), da)
+            p_name = '%s_binaryrpm_%s' % (redhatify_package_name(rosdistro, p), '_'.join(da))
             for u in upstream:
                 if u['name'] == p_name:
                     print ("  Skipping trigger of job '%s' because the upstream job '%s' is also triggered" % (job_name, p_name))
@@ -67,7 +69,7 @@ def trigger_if_necessary(da, pkg, rosdistro, jenkins_instance, missing_by_arch):
     if not jenkins_instance.job_exists(job_name):
         raise jenkins.JenkinsException('no such job[%s]' % (job_name))
     # pass parameters to create a POST request instead of GET
-    return jenkins_instance.jenkins_open(urllib2.Request(jenkins_instance.build_job_url(job_name), [('foo', 'bar')]))
+    return jenkins_instance.jenkins_open(urllib2.Request(jenkins_instance.build_job_url(job_name), dict('foo', 'bar')))
 
 
 if __name__ == '__main__':
@@ -78,7 +80,8 @@ if __name__ == '__main__':
         args.arches,
         args.fqdn,
         rosdistro=args.rosdistro,
-        sourcerpm_only=args.sourcerpm_only)
+        sourcerpm_only=args.sourcerpm_only,
+        wet_only=args.wet_only)
 
     print('')
     print('Missing packages:')
@@ -92,8 +95,6 @@ if __name__ == '__main__':
         for pkg in sorted(missing.iterkeys()):
             dist_archs = missing[pkg]
             for da in dist_archs:
-                if da.endswith('_source'):
-                    da = 'source'
                 if da not in missing_by_arch:
                     missing_by_arch[da] = set([])
                 missing_by_arch[da].add(pkg)
@@ -113,7 +114,7 @@ if __name__ == '__main__':
                     else:
                         skipped += 1
                 except Exception as ex:
-                    print("Failed to trigger package '%s' on arch '%s': %s" % (pkg, da, ex))
+                    print("Failed to trigger package '%s' on arch '%s': %s" % (pkg, '_'.join(da), ex))
 
         print('Triggered %d jobs, skipped %d jobs.' % (triggered, skipped))
 
