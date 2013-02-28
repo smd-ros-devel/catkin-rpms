@@ -11,7 +11,14 @@ Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in 
     <artifactNumToKeep>-1</artifactNumToKeep>
   </logRotator>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.7.2">
+      <maxConcurrentPerNode>1</maxConcurrentPerNode>
+      <maxConcurrentTotal>1</maxConcurrentTotal>
+      <throttleEnabled>true</throttleEnabled>
+      <throttleOption>project</throttleOption>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
   <scm class="hudson.plugins.git.GitSCM" plugin="git@1.2.0">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
@@ -56,24 +63,24 @@ Generated from catkin-rpms/resources/static_jobs. Do not edit on Jenkins but in 
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers class="vector">
     <hudson.triggers.TimerTrigger>
-      <spec>*/15 * * * *</spec>
+      <spec>*/30 * * * *</spec>
     </hudson.triggers.TimerTrigger>
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>#!/bin/bash
+      <command>#!/bin/bash -x
 
 source ./setup.sh
 
-echo "Triggering missing sourcerpms"
+echo &quot;Triggering missing sourcerpms&quot;
 ./scripts/trigger_missing.py groovy --sourcerpm-only --commit
 
-echo "Done"</command>
+echo &quot;Done&quot;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <hudson.tasks.Mailer>
+    <hudson.tasks.Mailer plugin="mailer@1.4">
       <recipients>logans@cottsay.net</recipients>
       <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
