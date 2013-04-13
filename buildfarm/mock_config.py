@@ -58,6 +58,12 @@ metadata_expire=1
 keepcache=0
 http_caching=none
 enabled=0
+
+[fedora-19]
+name=fedora-19
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-19&arch=x86_64
+failovermethod=priority
+includepkgs=eigen3-devel
 \"\"\"
 """%locals()
 
