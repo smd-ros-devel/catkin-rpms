@@ -144,7 +144,7 @@ class Rosdistro:
         config['local-name'] = local_name
 
         config['version'] = 'upstream/%s'%version
-        config['version'] = 'redhat/ros-%s-%s_%s_%s'%(self._rosdistro, local_name, version, distro_name)
+        config['version'] = 'rpm/ros-%s-%s_%s_%s'%(self._rosdistro, local_name, version, distro_name)
         #config['version'] = '%s-%s'%(local_name, version)
         config['uri'] = release_url
         return {'git': config}
