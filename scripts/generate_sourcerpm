@@ -61,7 +61,7 @@ def verify_rpm_tag(repo_uri, working_dir, package_name, package_version, distro)
 
     tags = call(working_dir, ('git', 'ls-remote', '--tags', repo_uri, 'rpm/*'), pipe=subprocess.PIPE)
 
-    expected_tag = 'redhat/%s_%s_%s'%(package_name, package_version, distro)
+    expected_tag = 'rpm/%s_%s_%s'%(package_name, package_version, distro)
     tag_list = []
     for tag in tags.split('\n'):
         if tag != '':
