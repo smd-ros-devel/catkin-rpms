@@ -8,6 +8,7 @@ repos = {
 'building': 'http://csc.mcs.sdsmt.edu/smd-ros-building',
 # Underlay should only be here until the packages are in the official Fedora repo
 'underlay': 'http://csc.mcs.sdsmt.edu/smd-ros-underlay'
+
 }
 
 def check_mock_config(distro, arch='i386', use_ramdisk=True, quiet=False):
@@ -58,14 +59,18 @@ metadata_expire=1
 keepcache=0
 http_caching=none
 enabled=0
+\"\"\"
+"""%locals()
 
+    arch_config += """
+config_opts['yum.conf'] += \"\"\"
 [fedora-19]
 name=fedora-19
 mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=fedora-19&arch=x86_64
 failovermethod=priority
 includepkgs=eigen3-devel
 \"\"\"
-"""%locals()
+"""
 
     if use_ramdisk:
         arch_config += """
